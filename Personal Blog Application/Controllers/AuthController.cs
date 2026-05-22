@@ -6,6 +6,7 @@ using Personal_Blog_Application.ViewModels;
 
 namespace Personal_Blog_Application.Controllers
 {
+    [AllowAnonymous]
     public class AuthController : Controller
     {
         private readonly UserManager<User> _userManager;
@@ -15,6 +16,13 @@ namespace Personal_Blog_Application.Controllers
         {
             _userManager = userManager;
             _signInManager = signInManager;
+        }
+
+        // Access denied
+        [Route("/auth/access-denied")]
+        public IActionResult AccessDenied()
+        {
+            return View();
         }
 
         // GET: /auth/login
