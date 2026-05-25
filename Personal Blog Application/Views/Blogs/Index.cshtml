@@ -1,142 +1,512 @@
-﻿@model List<Personal_Blog_Application.Models.Blog>
+@using System.Text.RegularExpressions
+@model List<Personal_Blog_Application.Models.Blog>
 
 @{
     ViewData["Title"] = "My Blogs";
     var isAdmin = User.IsInRole("ADMIN");
+
+    string Excerpt(string html, int max = 180)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+        var text = Regex.Replace(html, "<.*?>", " ");
+        text = System.Net.WebUtility.HtmlDecode(text);
+        text = Regex.Replace(text, @"\s+", " ").Trim();
+        return text.Length <= max ? text : text.Substring(0, max).TrimEnd() + "…";
+    }
+
+    string Initials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(new[] { ' ', '.', '@', '_', '-' },
+            StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1) return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+        return (parts[0][0].ToString() + parts[^1][0].ToString()).ToUpper();
+    }
+
+    string RelativeTime(DateTime utc)
+    {
+        var diff = DateTime.UtcNow - utc;
+        if (diff.TotalMinutes < 1) return "just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return utc.ToLocalTime().ToString("MMM dd, yyyy");
+    }
+
+    var groups = new (string Key, string Label, List<Personal_Blog_Application.Models.Blog> Items)[]
+    {
+        ("PUBLISHED", "Published", Model.Where(b => b.Status == "PUBLISHED").ToList()),
+        ("PRIVATE",   "Private",   Model.Where(b => b.Status == "PRIVATE").ToList()),
+        ("DRAFT",     "Drafts",    Model.Where(b => b.Status == "DRAFT").ToList())
+    };
 }
 
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem">
+<style>
+    .blogs-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--gray-200);
+        margin-bottom: 2rem;
+    }
+
+    .tab-btn {
+        background: transparent;
+        border: none;
+        padding: 0.85rem 1.25rem;
+        font-family: var(--font-body);
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        cursor: pointer;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: color var(--transition);
+    }
+
+        .tab-btn:hover {
+            color: var(--black);
+        }
+
+        .tab-btn.active {
+            color: var(--black);
+            font-weight: 500;
+        }
+
+            .tab-btn.active::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: -1px;
+                height: 2px;
+                background: var(--black);
+            }
+
+    .tab-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        height: 20px;
+        padding: 0 0.45rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        border-radius: 100px;
+    }
+
+    .tab-btn.active .tab-count {
+        background: var(--black);
+        color: #fff;
+    }
+
+    .tab-panel {
+        display: none;
+    }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+    .blogs-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    .blog-card {
+        position: relative;
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        padding: 1.75rem;
+        display: flex;
+        flex-direction: column;
+        transition: border-color var(--transition), transform var(--transition);
+    }
+
+        .blog-card:hover {
+            border-color: var(--gray-400);
+            transform: translateY(-2px);
+        }
+
+    .blog-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+    }
+
+    .blog-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--gray-200);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--gray-600);
+        flex-shrink: 0;
+    }
+
+    .blog-meta {
+        font-size: 0.775rem;
+        color: var(--gray-600);
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+        .blog-meta strong {
+            font-weight: 500;
+            color: var(--black);
+        }
+
+        .blog-meta .dot {
+            color: var(--gray-400);
+            margin: 0 0.35rem;
+        }
+
+    .blog-badge {
+        font-size: 0.7rem;
+        font-weight: 500;
+        padding: 0.25rem 0.6rem;
+        border-radius: 100px;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        flex-shrink: 0;
+    }
+
+        .blog-badge.p5 {
+            background: #0a0a0a;
+            color: #fff;
+        }
+
+        .blog-badge.p4 {
+            background: #262626;
+            color: #fff;
+        }
+
+        .blog-badge.p3 {
+            background: #e8e8e8;
+            color: #0a0a0a;
+        }
+
+        .blog-badge.p2 {
+            background: #f4f4f4;
+            color: #525252;
+        }
+
+        .blog-badge.p1 {
+            background: #fafafa;
+            color: #a0a0a0;
+        }
+
+    .blog-title {
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+        color: var(--black);
+        margin-bottom: 0.6rem;
+        text-decoration: none;
+        display: block;
+    }
+
+        .blog-title:hover {
+            color: var(--black);
+            text-decoration: none;
+        }
+
+    .blog-excerpt {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        line-height: 1.65;
+        margin-bottom: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+    }
+
+    .blog-actions {
+        position: absolute;
+        bottom: 0.75rem;
+        right: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        opacity: 0;
+        transition: opacity var(--transition);
+    }
+
+    .blog-card:hover .blog-actions,
+    .blog-card:focus-within .blog-actions {
+        opacity: 1;
+    }
+
+    .blog-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0;
+        height: 30px;
+        padding: 0 0.4rem;
+        font-size: 0.75rem;
+        color: var(--gray-600);
+        background: var(--white);
+        text-decoration: none;
+        border-radius: var(--radius);
+        transition: background var(--transition), color var(--transition), gap var(--transition);
+        overflow: hidden;
+    }
+
+        .blog-action svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        .blog-action .label {
+            max-width: 0;
+            opacity: 0;
+            white-space: nowrap;
+            transition: max-width var(--transition), opacity var(--transition);
+        }
+
+        .blog-action:hover {
+            background: var(--gray-100);
+            color: var(--black);
+            gap: 0.4rem;
+        }
+
+            .blog-action:hover .label {
+                max-width: 80px;
+                opacity: 1;
+            }
+
+        .blog-action.primary {
+            color: var(--black);
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 0;
+        color: var(--gray-400);
+    }
+
+        .empty-state .empty-title {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            color: var(--gray-600);
+        }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        padding: 0.2rem 0.55rem;
+        border-radius: 100px;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        flex-shrink: 0;
+    }
+
+        .status-pill.draft {
+            background: #fff7e6;
+            color: #b54708;
+        }
+
+        .status-pill.private {
+            background: #f0f1ff;
+            color: #3b3f87;
+        }
+
+    @@media (max-width: 768px) {
+        .blogs-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="blogs-header">
     <div>
         <h1 style="font-family:var(--font-display);font-size:2rem;
-            letter-spacing:-0.03em;margin-bottom:0.25rem">
+                   letter-spacing:-0.03em;margin-bottom:0.25rem">
             @(isAdmin ? "All Posts" : "My Posts")
         </h1>
-        <p style="font-size:0.875rem;color:var(--gray-600)">
-            @Model.Count post@(Model.Count != 1 ? "s" : "")
+        <p style="font-size:0.875rem;color:var(--gray-600);margin:0">
+            @Model.Count post@(Model.Count != 1 ? "s" : "") total
         </p>
     </div>
-    <a asp-action="Create"
-       style="display:inline-flex;align-items:center;gap:0.5rem;
-        height:42px;padding:0 1.25rem;background:var(--black);
-        color:#fff;font-size:0.85rem;font-weight:500;
-        border-radius:2px;text-decoration:none">
-        + New post
-    </a>
+    <a asp-action="Create" class="btn btn-primary">+ New post</a>
 </div>
 
 @if (!Model.Any())
 {
-    <div style="text-align:center;padding:5rem 0;color:var(--gray-400)">
-        <p style="font-family:var(--font-display);font-size:1.5rem;
-            letter-spacing:-0.02em;margin-bottom:0.5rem">
-            No posts yet
-        </p>
+    <div class="empty-state">
+        <p class="empty-title">No posts yet</p>
         <p style="font-size:0.875rem;margin-bottom:1.5rem">
             Start writing your first blog post.
         </p>
-        <a asp-action="Create"
-           style="background:var(--black);color:#fff;padding:0.6rem 1.5rem;
-            border-radius:2px;text-decoration:none;font-size:0.875rem">
-            Create post
-        </a>
+        <a asp-action="Create" class="btn btn-primary">Create post</a>
     </div>
 }
 else
 {
-    <div style="border:1px solid var(--gray-200);border-radius:4px;
-        overflow:hidden;background:#fff">
-        <table style="width:100%;border-collapse:collapse">
-            <thead>
-                <tr style="border-bottom:1px solid var(--gray-200);
-                    background:var(--gray-50)">
-                    <th style="padding:0.75rem 1.25rem;text-align:left;
-                    font-size:0.725rem;font-weight:500;
-                    letter-spacing:0.08em;text-transform:uppercase;
-                    color:var(--gray-600)">Title</th>
-                    @if (isAdmin)
+    <!-- Tabs -->
+    <div class="tabs" role="tablist">
+        @for (var i = 0; i < groups.Length; i++)
+        {
+            var g = groups[i];
+            <button type="button" class="tab-btn @(i == 0 ? "active" : "")"
+                    data-tab="@g.Key" role="tab">
+                @g.Label
+                <span class="tab-count">@g.Items.Count</span>
+            </button>
+        }
+    </div>
+
+    <!-- Panels -->
+    @for (var i = 0; i < groups.Length; i++)
+    {
+        var g = groups[i];
+        <div class="tab-panel @(i == 0 ? "active" : "")" data-panel="@g.Key">
+            @if (!g.Items.Any())
+            {
+                <div class="empty-state">
+                    <p class="empty-title">No @g.Label.ToLower() posts</p>
+                    <p style="font-size:0.875rem">
+                        @switch (g.Key)
+                        {
+                            case "DRAFT":
+                                <text>Drafts you save will show up here so you can keep writing.</text>
+                                break;
+                            case "PRIVATE":
+                                <text>Posts marked as private will appear here. Only you can see them.</text>
+                                break;
+                            default:
+                                <text>Publish a post to share it with everyone.</text>
+                                break;
+                        }
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="blogs-grid">
+                    @foreach (var blog in g.Items)
                     {
-                        <th style="padding:0.75rem 1rem;text-align:left;
-                        font-size:0.725rem;font-weight:500;
-                        letter-spacing:0.08em;text-transform:uppercase;
-                        color:var(--gray-600)">Author</th>
-                    }
-                    <th style="padding:0.75rem 1rem;text-align:center;
-                    font-size:0.725rem;font-weight:500;
-                    letter-spacing:0.08em;text-transform:uppercase;
-                    color:var(--gray-600)">Priority</th>
-                    <th style="padding:0.75rem 1rem;text-align:left;
-                    font-size:0.725rem;font-weight:500;
-                    letter-spacing:0.08em;text-transform:uppercase;
-                    color:var(--gray-600)">Date</th>
-                    <th style="padding:0.75rem 1rem;text-align:right;
-                    font-size:0.725rem;font-weight:500;
-                    letter-spacing:0.08em;text-transform:uppercase;
-                    color:var(--gray-600)">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var blog in Model)
-                {
-                    <tr style="border-bottom:1px solid var(--gray-200);
-                        transition:background 0.15s"
-                        onmouseover="this.style.background='var(--gray-50)'"
-                        onmouseout="this.style.background=''">
-                        <td style="padding:1rem 1.25rem;max-width:320px">
-                            <a asp-action="Detail" asp-route-id="@blog.Id"
-                               style="font-weight:500;color:var(--black);
-                                text-decoration:none;font-size:0.9rem;
-                                display:block;white-space:nowrap;
-                                overflow:hidden;text-overflow:ellipsis"
+                        var authorName = blog.User?.UserName ?? "Unknown";
+                        <article class="blog-card">
+                            <div class="blog-card-header">
+                                <div class="blog-avatar">@Initials(authorName)</div>
+                                <span class="blog-meta">
+                                    <strong>@authorName</strong>
+                                    <span class="dot">·</span>
+                                    @RelativeTime(blog.CreatedAt)
+                                </span>
+                                @if (blog.Status == "DRAFT")
+                                {
+                                    <span class="status-pill draft">Draft</span>
+                                }
+                                else if (blog.Status == "PRIVATE")
+                                {
+                                    <span class="status-pill private">Private</span>
+                                }
+                                <span class="blog-badge p@(blog.Priority)">P@(blog.Priority)</span>
+                            </div>
+
+                            <a asp-action="Detail" asp-route-id="@blog.Id" class="blog-title"
                                title="@blog.Title">
                                 @blog.Title
                             </a>
-                        </td>
-                        @if (isAdmin)
-                        {
-                            <td style="padding:1rem;font-size:0.85rem;
-                                color:var(--gray-600)">
-                                @blog.User?.UserName
-                            </td>
-                        }
-                        <td style="padding:1rem;text-align:center">
-                            @{
-                                var (bg, fg) = blog.Priority switch
+
+                            <p class="blog-excerpt">@Excerpt(blog.Content)</p>
+
+                            <div class="blog-actions">
+                                @if (blog.Status == "DRAFT")
                                 {
-                                    5 => ("#0a0a0a", "#ffffff"),
-                                    4 => ("#262626", "#ffffff"),
-                                    3 => ("#e8e8e8", "#0a0a0a"),
-                                    2 => ("#f4f4f4", "#525252"),
-                                    _ => ("#fafafa", "#a0a0a0")
-                                };
-                            }
-                            <span style="display:inline-block;padding:0.2rem 0.6rem;
-                                border-radius:100px;font-size:0.72rem;
-                                font-weight:500;background:@bg;color:@fg">
-                                P@(blog.Priority)
-                            </span>
-                        </td>
-                        <td style="padding:1rem;font-size:0.825rem;
-                            color:var(--gray-600);white-space:nowrap">
-                            @blog.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
-                        </td>
-                        <td style="padding:1rem;text-align:right;white-space:nowrap">
-                            <a asp-action="Detail" asp-route-id="@blog.Id"
-                               style="font-size:0.8rem;color:var(--gray-600);
-                            text-decoration:none;padding:0.3rem 0.6rem;
-                            border-radius:2px;transition:background 0.15s"
-                               onmouseover="this.style.background='var(--gray-100)'"
-                               onmouseout="this.style.background=''">View</a>
-                            <a asp-action="Edit" asp-route-id="@blog.Id"
-                               style="font-size:0.8rem;color:var(--gray-600);
-                            text-decoration:none;padding:0.3rem 0.6rem;
-                            border-radius:2px;margin-left:0.25rem;
-                            transition:background 0.15s"
-                               onmouseover="this.style.background='var(--gray-100)'"
-                               onmouseout="this.style.background=''">Edit</a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+                                    <a asp-action="Edit" asp-route-id="@blog.Id"
+                                       class="blog-action primary"
+                                       aria-label="Continue writing" title="Continue writing">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M12 20h9" />
+                                            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                        </svg>
+                                        <span class="label">Continue</span>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-action="Detail" asp-route-id="@blog.Id"
+                                       class="blog-action primary" aria-label="View" title="View">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                            <circle cx="12" cy="12" r="3" />
+                                        </svg>
+                                        <span class="label">View</span>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@blog.Id"
+                                       class="blog-action" aria-label="Edit" title="Edit">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M12 20h9" />
+                                            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                        </svg>
+                                        <span class="label">Edit</span>
+                                    </a>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    <script>
+        (function () {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const panels = document.querySelectorAll('.tab-panel');
+
+            tabs.forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    const key = tab.getAttribute('data-tab');
+                    tabs.forEach(t => t.classList.toggle('active', t === tab));
+                    panels.forEach(p => p.classList.toggle('active', p.getAttribute('data-panel') === key));
+                    // Persist in URL hash so refresh keeps tab
+                    history.replaceState(null, '', '#' + key.toLowerCase());
+                });
+            });
+
+            // Restore tab from hash on load
+            const hash = (location.hash || '').replace('#', '').toUpperCase();
+            if (hash) {
+                const target = document.querySelector('.tab-btn[data-tab="' + hash + '"]');
+                if (target) target.click();
+            }
+        })();
+    </script>
 }

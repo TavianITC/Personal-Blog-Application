@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Personal_Blog_Application.Data;
-using Personal_Blog_Application.Data.BlogApp.Data;
 using Personal_Blog_Application.Models;
 using Personal_Blog_Application.ViewModels;
 
@@ -61,8 +60,9 @@ namespace Personal_Blog_Application.Controllers
             var blog = new Blog
             {
                 Title = model.Title,
-                Content = model.Content, // HTML from TinyMCE
+                Content = model.Content, // HTML from rich editor
                 Priority = model.Priority,
+                Status = model.Status,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = userId!
             };
@@ -70,7 +70,12 @@ namespace Personal_Blog_Application.Controllers
             _context.Blogs.Add(blog);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Blog post created successfully.";
+            TempData["Success"] = model.Status switch
+            {
+                "DRAFT" => "Draft saved.",
+                "PRIVATE" => "Blog saved as private.",
+                _ => "Blog published successfully."
+            };
             return RedirectToAction(nameof(Index));
         }
     }

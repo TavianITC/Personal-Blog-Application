@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Personal_Blog_Application.ViewModels
 {
@@ -15,5 +15,10 @@ namespace Personal_Blog_Application.ViewModels
 
         [Range(1, 5, ErrorMessage = "Priority must be between 1 and 5.")]
         public int Priority { get; set; } = 1;
+
+        [Required]
+        [RegularExpression("^(DRAFT|PUBLISHED|PRIVATE)$",
+            ErrorMessage = "Status must be DRAFT, PUBLISHED, or PRIVATE.")]
+        public string Status { get; set; } = "DRAFT";
     }
 }
