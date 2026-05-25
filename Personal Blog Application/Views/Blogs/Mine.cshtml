@@ -1,37 +1,8 @@
-@using System.Text.RegularExpressions
 @model List<Personal_Blog_Application.Models.Blog>
 
 @{
     ViewData["Title"] = "My Blogs";
     var isAdmin = User.IsInRole("ADMIN");
-
-    string Excerpt(string html, int max = 180)
-    {
-        if (string.IsNullOrWhiteSpace(html)) return string.Empty;
-        var text = Regex.Replace(html, "<.*?>", " ");
-        text = System.Net.WebUtility.HtmlDecode(text);
-        text = Regex.Replace(text, @"\s+", " ").Trim();
-        return text.Length <= max ? text : text.Substring(0, max).TrimEnd() + "…";
-    }
-
-    string Initials(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return "?";
-        var parts = name.Split(new[] { ' ', '.', '@', '_', '-' },
-            StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 1) return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
-        return (parts[0][0].ToString() + parts[^1][0].ToString()).ToUpper();
-    }
-
-    string RelativeTime(DateTime utc)
-    {
-        var diff = DateTime.UtcNow - utc;
-        if (diff.TotalMinutes < 1) return "just now";
-        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
-        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
-        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
-        return utc.ToLocalTime().ToString("MMM dd, yyyy");
-    }
 
     var groups = new (string Key, string Label, List<Personal_Blog_Application.Models.Blog> Items)[]
     {
@@ -213,6 +184,29 @@
         .blog-badge.p1 {
             background: #fafafa;
             color: #a0a0a0;
+        }
+
+    .comment-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        padding: 0.25rem 0.5rem;
+        border-radius: 100px;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        flex-shrink: 0;
+    }
+
+        .comment-count svg {
+            width: 12px;
+            height: 12px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
     .blog-title {
@@ -533,11 +527,11 @@ else
                         var authorName = blog.User?.UserName ?? "Unknown";
                         <article class="blog-card">
                             <div class="blog-card-header">
-                                <div class="blog-avatar">@Initials(authorName)</div>
+                                <div class="blog-avatar">@ViewHelpers.Initials(authorName)</div>
                                 <span class="blog-meta">
                                     <strong>@authorName</strong>
                                     <span class="dot">·</span>
-                                    @RelativeTime(blog.CreatedAt)
+                                    @ViewHelpers.RelativeTime(blog.CreatedAt)
                                 </span>
                                 @if (blog.Status == "DRAFT")
                                 {
@@ -551,6 +545,15 @@ else
                                 {
                                     <span class="status-pill published">Published</span>
                                 }
+                                @if (blog.Comments.Count > 0)
+                                {
+                                    <span class="comment-count" title="@blog.Comments.Count comment@(blog.Comments.Count != 1 ? "s" : "")">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                                        </svg>
+                                        @blog.Comments.Count
+                                    </span>
+                                }
                                 <span class="blog-badge p@(blog.Priority)">P@(blog.Priority)</span>
                             </div>
 
@@ -559,7 +562,7 @@ else
                                 @blog.Title
                             </a>
 
-                            <p class="blog-excerpt">@Excerpt(blog.Content)</p>
+                            <p class="blog-excerpt">@ViewHelpers.Excerpt(blog.Content)</p>
 
                             <div class="blog-actions">
                                 @if (blog.Status == "DRAFT")
