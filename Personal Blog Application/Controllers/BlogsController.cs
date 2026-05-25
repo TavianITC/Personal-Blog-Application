@@ -27,7 +27,10 @@ namespace Personal_Blog_Application.Controllers
         {
             var isAdmin = User.IsInRole("ADMIN");
 
-            IQueryable<Blog> query = _context.Blogs.Include(b => b.User);
+            IQueryable<Blog> query = _context.Blogs
+                .Include(b => b.User)
+                .Include(b => b.Comments)
+                .AsSplitQuery();
 
             if (!isAdmin)
                 query = query.Where(b => b.Status == "PUBLISHED");
@@ -55,6 +58,8 @@ namespace Personal_Blog_Application.Controllers
 
             IQueryable<Blog> query = _context.Blogs
                 .Include(b => b.User)
+                .Include(b => b.Comments)
+                .AsSplitQuery()
                 .Where(b => b.CreatedBy == userId);
 
             if (!string.IsNullOrWhiteSpace(title))
@@ -83,8 +88,12 @@ namespace Personal_Blog_Application.Controllers
         // GET /blogs/detail/5
         public async Task<IActionResult> Detail(int id)
         {
+            // Single eager-loaded query: blog + author + comments + each comment's author.
+            // AsSplitQuery avoids a cartesian explosion when a post has many comments.
             var blog = await _context.Blogs
                 .Include(b => b.User)
+                .Include(b => b.Comments).ThenInclude(c => c.User)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(b => b.Id == id);
 
             if (blog == null) return NotFound();
@@ -93,7 +102,18 @@ namespace Personal_Blog_Application.Controllers
             if (blog.Status != "PUBLISHED" && !CanModify(blog))
                 return Forbid();
 
-            return View(blog);
+            var from = Request.Query["from"].ToString();
+            var vm = new BlogDetailViewModel
+            {
+                Blog = blog,
+                Comments = blog.Comments.OrderByDescending(c => c.CreatedAt).ToList(),
+                NewComment = new CommentCreateViewModel
+                {
+                    BlogId = id,
+                    From = string.IsNullOrEmpty(from) ? null : from
+                }
+            };
+            return View(vm);
         }
 
         // GET /blogs/create

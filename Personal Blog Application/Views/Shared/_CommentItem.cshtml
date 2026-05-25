@@ -1,0 +1,36 @@
+@model Personal_Blog_Application.Models.Comment
+
+@{
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var canDelete = User.IsInRole("ADMIN") || Model.CreatedBy == userId;
+    var authorName = Model.User?.UserName ?? "Unknown";
+    var snippet = Model.Content.Length > 80
+        ? Model.Content.Substring(0, 80) + "…"
+        : Model.Content;
+}
+
+<div class="comment-item" data-comment-id="@Model.Id">
+    <div class="comment-avatar">@ViewHelpers.Initials(authorName)</div>
+    <div class="comment-body">
+        <div class="comment-meta">
+            <strong>@authorName</strong>
+            <span class="dot">·</span>
+            <span>@ViewHelpers.RelativeTime(Model.CreatedAt)</span>
+            @if (canDelete)
+            {
+                <button type="button" class="comment-delete js-delete-comment"
+                        data-id="@Model.Id"
+                        data-snippet="@snippet"
+                        aria-label="Delete comment" title="Delete comment">
+                    <svg viewBox="0 0 24 24">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6" />
+                        <path d="M10 11v6M14 11v6" />
+                        <path d="M9 6V4a2 2 0 012-2h2a2 2 0 012 2v2" />
+                    </svg>
+                </button>
+            }
+        </div>
+        <p class="comment-content">@Model.Content</p>
+    </div>
+</div>

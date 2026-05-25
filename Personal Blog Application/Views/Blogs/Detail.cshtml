@@ -1,36 +1,17 @@
-@model Personal_Blog_Application.Models.Blog
+@model Personal_Blog_Application.ViewModels.BlogDetailViewModel
 
 @{
-    ViewData["Title"] = Model.Title;
+    var blog = Model.Blog;
+    ViewData["Title"] = blog.Title;
     var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-    var canEdit = User.IsInRole("ADMIN") || Model.CreatedBy == userId;
+    var canEdit = User.IsInRole("ADMIN") || blog.CreatedBy == userId;
 
     // Where did the user come from? "mine" → back to My Posts; otherwise Posts
     var from = Context.Request.Query["from"].ToString();
     var backAction = from == "mine" ? "Mine" : "Index";
     var backLabel = from == "mine" ? "Back to my posts" : "Back to posts";
 
-    string Initials(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return "?";
-        var parts = name.Split(new[] { ' ', '.', '@', '_', '-' },
-            System.StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 1)
-            return parts[0].Substring(0, System.Math.Min(2, parts[0].Length)).ToUpper();
-        return (parts[0][0].ToString() + parts[^1][0].ToString()).ToUpper();
-    }
-
-    string RelativeTime(System.DateTime utc)
-    {
-        var diff = System.DateTime.UtcNow - utc;
-        if (diff.TotalMinutes < 1) return "just now";
-        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
-        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
-        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
-        return utc.ToLocalTime().ToString("MMM dd, yyyy");
-    }
-
-    var authorName = Model.User?.UserName ?? "Unknown";
+    var authorName = blog.User?.UserName ?? "Unknown";
 }
 
 <style>
@@ -196,45 +177,45 @@
     <a asp-action="@backAction" class="btn btn-link detail-back">← @backLabel</a>
 
     <div class="detail-meta">
-        <div class="detail-avatar">@Initials(authorName)</div>
+        <div class="detail-avatar">@ViewHelpers.Initials(authorName)</div>
         <span class="detail-author">
             <strong>@authorName</strong>
             <span class="dot">·</span>
-            @RelativeTime(Model.CreatedAt)
-            @if (Model.UpdatedAt.HasValue && Model.UpdatedAt.Value > Model.CreatedAt.AddMinutes(1))
+            @ViewHelpers.RelativeTime(blog.CreatedAt)
+            @if (blog.UpdatedAt.HasValue && blog.UpdatedAt.Value > blog.CreatedAt.AddMinutes(1))
             {
                 <span class="dot">·</span>
-                <span>edited @RelativeTime(Model.UpdatedAt.Value)</span>
+                <span>edited @ViewHelpers.RelativeTime(blog.UpdatedAt.Value)</span>
             }
         </span>
     </div>
 
-    <h1 class="detail-title">@Model.Title</h1>
+    <h1 class="detail-title">@blog.Title</h1>
 
     <div class="detail-badges">
-        <span class="detail-badge priority-@Model.Priority">P@(Model.Priority)</span>
-        @if (Model.Status == "DRAFT")
+        <span class="detail-badge priority-@blog.Priority">P@(blog.Priority)</span>
+        @if (blog.Status == "DRAFT")
         {
             <span class="detail-badge status-draft">Draft</span>
         }
-        else if (Model.Status == "PRIVATE")
+        else if (blog.Status == "PRIVATE")
         {
             <span class="detail-badge status-private">Private</span>
         }
     </div>
 
     <article class="detail-content">
-        @Html.Raw(Model.Content)
+        @Html.Raw(blog.Content)
     </article>
 
     <div class="detail-footer">
         <span class="detail-footer-info">
-            Posted @Model.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy 'at' HH:mm")
+            Posted @blog.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy 'at' HH:mm")
         </span>
 
         @if (canEdit)
         {
-            <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-from="@from"
+            <a asp-action="Edit" asp-route-id="@blog.Id" asp-route-from="@from"
                class="btn btn-secondary btn-sm">
                 Edit
             </a>
@@ -243,6 +224,8 @@
             </button>
         }
     </div>
+
+    <partial name="_CommentSection" model="Model" />
 </div>
 
 @if (canEdit)
@@ -258,11 +241,11 @@
                 Delete this post?
             </h2>
             <p style="font-size:0.875rem;color:var(--gray-600);margin-bottom:1.5rem;line-height:1.6">
-                "<strong>@Model.Title</strong>" will be permanently deleted. This action cannot be undone.
+                "<strong>@blog.Title</strong>" will be permanently deleted. This action cannot be undone.
             </p>
             <div style="display:flex;justify-content:flex-end;gap:0.5rem">
                 <button type="button" id="cancel-delete" class="btn btn-ghost btn-sm">Cancel</button>
-                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" style="margin:0">
+                <form asp-action="Delete" asp-route-id="@blog.Id" method="post" style="margin:0">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-danger btn-sm">Delete post</button>
                 </form>
@@ -286,4 +269,8 @@
             });
         })();
     </script>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }
