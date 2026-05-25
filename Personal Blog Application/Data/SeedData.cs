@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Personal_Blog_Application.Data.BlogApp.Data;
 using Personal_Blog_Application.Models;
 
 namespace Personal_Blog_Application.Data
@@ -50,6 +49,7 @@ namespace Personal_Blog_Application.Data
                         Title = "Welcome to Blog App",
                         Content = "<h2>Hello World!</h2><p>This is the first blog post.</p>",
                         Priority = 5,
+                        Status = "PUBLISHED",
                         CreatedAt = DateTime.UtcNow,
                         CreatedBy = adminUser.Id
                     },
@@ -58,6 +58,7 @@ namespace Personal_Blog_Application.Data
                         Title = "Getting Started with ASP.NET Core",
                         Content = "<p>ASP.NET Core is a cross-platform framework...</p>",
                         Priority = 4,
+                        Status = "PUBLISHED",
                         CreatedAt = DateTime.UtcNow,
                         CreatedBy = adminUser.Id
                     },
@@ -66,6 +67,7 @@ namespace Personal_Blog_Application.Data
                         Title = "Entity Framework Core Tips",
                         Content = "<p>EF Core makes database access easy with Code-First approach...</p>",
                         Priority = 3,
+                        Status = "PUBLISHED",
                         CreatedAt = DateTime.UtcNow,
                         CreatedBy = adminUser.Id
                     }

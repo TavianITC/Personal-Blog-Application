@@ -1,0 +1,703 @@
+@using System.Text.RegularExpressions
+@model List<Personal_Blog_Application.Models.Blog>
+
+@{
+    ViewData["Title"] = "My Blogs";
+    var isAdmin = User.IsInRole("ADMIN");
+
+    string Excerpt(string html, int max = 180)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+        var text = Regex.Replace(html, "<.*?>", " ");
+        text = System.Net.WebUtility.HtmlDecode(text);
+        text = Regex.Replace(text, @"\s+", " ").Trim();
+        return text.Length <= max ? text : text.Substring(0, max).TrimEnd() + "…";
+    }
+
+    string Initials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(new[] { ' ', '.', '@', '_', '-' },
+            StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1) return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+        return (parts[0][0].ToString() + parts[^1][0].ToString()).ToUpper();
+    }
+
+    string RelativeTime(DateTime utc)
+    {
+        var diff = DateTime.UtcNow - utc;
+        if (diff.TotalMinutes < 1) return "just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return utc.ToLocalTime().ToString("MMM dd, yyyy");
+    }
+
+    var groups = new (string Key, string Label, List<Personal_Blog_Application.Models.Blog> Items)[]
+    {
+        ("PUBLISHED", "Published", Model.Where(b => b.Status == "PUBLISHED").ToList()),
+        ("PRIVATE",   "Private",   Model.Where(b => b.Status == "PRIVATE").ToList()),
+        ("DRAFT",     "Drafts",    Model.Where(b => b.Status == "DRAFT").ToList())
+    };
+}
+
+<style>
+    .blogs-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--gray-200);
+        margin-bottom: 2rem;
+    }
+
+    .tab-btn {
+        background: transparent;
+        border: none;
+        padding: 0.85rem 1.25rem;
+        font-family: var(--font-body);
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        cursor: pointer;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: color var(--transition);
+    }
+
+        .tab-btn:hover {
+            color: var(--black);
+        }
+
+        .tab-btn.active {
+            color: var(--black);
+            font-weight: 500;
+        }
+
+            .tab-btn.active::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: -1px;
+                height: 2px;
+                background: var(--black);
+            }
+
+    .tab-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        height: 20px;
+        padding: 0 0.45rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        border-radius: 100px;
+    }
+
+    .tab-btn.active .tab-count {
+        background: var(--black);
+        color: #fff;
+    }
+
+    .tab-panel {
+        display: none;
+    }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+    .blogs-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    .blog-card {
+        position: relative;
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        padding: 1.75rem;
+        display: flex;
+        flex-direction: column;
+        transition: border-color var(--transition), transform var(--transition);
+    }
+
+        .blog-card:hover {
+            border-color: var(--gray-400);
+            transform: translateY(-2px);
+        }
+
+    .blog-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+    }
+
+    .blog-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--gray-200);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--gray-600);
+        flex-shrink: 0;
+    }
+
+    .blog-meta {
+        font-size: 0.775rem;
+        color: var(--gray-600);
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+        .blog-meta strong {
+            font-weight: 500;
+            color: var(--black);
+        }
+
+        .blog-meta .dot {
+            color: var(--gray-400);
+            margin: 0 0.35rem;
+        }
+
+    .blog-badge {
+        font-size: 0.7rem;
+        font-weight: 500;
+        padding: 0.25rem 0.6rem;
+        border-radius: 100px;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        flex-shrink: 0;
+    }
+
+        .blog-badge.p5 {
+            background: #0a0a0a;
+            color: #fff;
+        }
+
+        .blog-badge.p4 {
+            background: #262626;
+            color: #fff;
+        }
+
+        .blog-badge.p3 {
+            background: #e8e8e8;
+            color: #0a0a0a;
+        }
+
+        .blog-badge.p2 {
+            background: #f4f4f4;
+            color: #525252;
+        }
+
+        .blog-badge.p1 {
+            background: #fafafa;
+            color: #a0a0a0;
+        }
+
+    .blog-title {
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+        color: var(--black);
+        margin-bottom: 0.6rem;
+        text-decoration: none;
+        display: block;
+    }
+
+        .blog-title:hover {
+            color: var(--black);
+            text-decoration: none;
+        }
+
+    .blog-excerpt {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        line-height: 1.65;
+        margin-bottom: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+    }
+
+    .blog-actions {
+        position: absolute;
+        bottom: 0.75rem;
+        right: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        opacity: 0;
+        transition: opacity var(--transition);
+    }
+
+    .blog-card:hover .blog-actions,
+    .blog-card:focus-within .blog-actions {
+        opacity: 1;
+    }
+
+    .blog-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0;
+        height: 30px;
+        padding: 0 0.4rem;
+        font-size: 0.75rem;
+        color: var(--gray-600);
+        background: var(--white);
+        text-decoration: none;
+        border-radius: var(--radius);
+        transition: background var(--transition), color var(--transition), gap var(--transition);
+        overflow: hidden;
+    }
+
+        .blog-action svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        .blog-action .label {
+            max-width: 0;
+            opacity: 0;
+            white-space: nowrap;
+            transition: max-width var(--transition), opacity var(--transition);
+        }
+
+        .blog-action:hover {
+            background: var(--gray-100);
+            color: var(--black);
+            gap: 0.4rem;
+        }
+
+            .blog-action:hover .label {
+                max-width: 80px;
+                opacity: 1;
+            }
+
+        .blog-action.primary {
+            color: var(--black);
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 0;
+        color: var(--gray-400);
+    }
+
+        .empty-state .empty-title {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            color: var(--gray-600);
+        }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        padding: 0.2rem 0.55rem;
+        border-radius: 100px;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        flex-shrink: 0;
+    }
+
+        .status-pill.draft {
+            background: #fff7e6;
+            color: #b54708;
+        }
+
+        .status-pill.private {
+            background: #f0f1ff;
+            color: #3b3f87;
+        }
+
+        .status-pill.published {
+            background: #e6ffed;
+            color: #1a7f37;
+        }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-input,
+    .filter-select {
+        height: 38px;
+        padding: 0 0.9rem;
+        font-family: var(--font-body);
+        font-size: 0.85rem;
+        color: var(--black);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius);
+        background: var(--gray-50);
+        outline: none;
+        transition: border-color var(--transition), background var(--transition);
+    }
+
+        .filter-input::placeholder {
+            color: var(--gray-400);
+        }
+
+        .filter-input:focus,
+        .filter-select:focus {
+            border-color: var(--black);
+            background: var(--white);
+        }
+
+    .filter-input {
+        min-width: 200px;
+        flex: 1 1 200px;
+    }
+
+    .filter-select {
+        cursor: pointer;
+        min-width: 200px;
+    }
+
+    .filter-active-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.75rem;
+        color: var(--gray-600);
+        background: var(--gray-100);
+        padding: 0.3rem 0.65rem;
+        border-radius: 100px;
+    }
+
+    /* Delete-variant of blog-action */
+    .blog-action.danger {
+        color: var(--gray-600);
+    }
+
+        .blog-action.danger:hover {
+            background: #fef2f2;
+            color: var(--error);
+        }
+
+    @@media (max-width: 768px) {
+        .blogs-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="blogs-header">
+    <div>
+        <h1 style="font-family:var(--font-display);font-size:2rem;
+                   letter-spacing:-0.03em;margin-bottom:0.25rem">
+            My Posts
+        </h1>
+        <p style="font-size:0.875rem;color:var(--gray-600);margin:0">
+            @Model.Count post@(Model.Count != 1 ? "s" : "") total
+        </p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">+ New post</a>
+</div>
+
+@{
+    var filterTitle = ViewBag.FilterTitle as string;
+    var filterAuthor = ViewBag.FilterAuthor as string;
+    var filterSort = ViewBag.FilterSort as string;
+    var hasFilters = !string.IsNullOrWhiteSpace(filterTitle)
+                  || !string.IsNullOrWhiteSpace(filterAuthor)
+                  || !string.IsNullOrWhiteSpace(filterSort);
+}
+
+<!-- Filter bar -->
+<form method="get" class="filter-bar" id="filter-form">
+    <input type="text" name="title" value="@filterTitle" placeholder="Search title…" class="filter-input" />
+    <input type="text" name="author" value="@filterAuthor" placeholder="Author…" class="filter-input" />
+    <select name="sort" class="filter-select">
+        <option value="" selected="@(string.IsNullOrEmpty(filterSort))">Sort: Newest</option>
+        <option value="priority_desc" selected="@(filterSort == "priority_desc" || filterSort == "priority")">
+            Sort: Priority — High to low
+        </option>
+        <option value="priority_asc" selected="@(filterSort == "priority_asc")">
+            Sort: Priority — Low to high
+        </option>
+    </select>
+    <button type="submit" class="btn btn-secondary btn-sm">Apply</button>
+    @if (hasFilters)
+    {
+        <a asp-action="Mine" class="btn btn-ghost btn-sm">Clear</a>
+    }
+</form>
+
+@if (!Model.Any())
+{
+    if (hasFilters)
+    {
+        <div class="empty-state">
+            <p class="empty-title">No posts match</p>
+            <p style="font-size:0.875rem;margin-bottom:1.5rem">
+                Try a different keyword or clear your filters.
+            </p>
+            <a asp-action="Mine" class="btn btn-secondary">Clear filters</a>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <p class="empty-title">No posts yet</p>
+            <p style="font-size:0.875rem;margin-bottom:1.5rem">
+                Start writing your first blog post.
+            </p>
+            <a asp-action="Create" class="btn btn-primary">Create post</a>
+        </div>
+    }
+}
+else
+{
+    <!-- Tabs -->
+    <div class="tabs" role="tablist">
+        @for (var i = 0; i < groups.Length; i++)
+        {
+            var g = groups[i];
+            <button type="button" class="tab-btn @(i == 0 ? "active" : "")"
+                    data-tab="@g.Key" role="tab">
+                @g.Label
+                <span class="tab-count">@g.Items.Count</span>
+            </button>
+        }
+    </div>
+
+    <!-- Panels -->
+    @for (var i = 0; i < groups.Length; i++)
+    {
+        var g = groups[i];
+        <div class="tab-panel @(i == 0 ? "active" : "")" data-panel="@g.Key">
+            @if (!g.Items.Any())
+            {
+                <div class="empty-state">
+                    <p class="empty-title">No @g.Label.ToLower() posts</p>
+                    <p style="font-size:0.875rem">
+                        @switch (g.Key)
+                        {
+                            case "DRAFT":
+                                <text>Drafts you save will show up here so you can keep writing.</text>
+                                break;
+                            case "PRIVATE":
+                                <text>Posts marked as private will appear here. Only you can see them.</text>
+                                break;
+                            default:
+                                <text>Publish a post to share it with everyone.</text>
+                                break;
+                        }
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="blogs-grid">
+                    @foreach (var blog in g.Items)
+                    {
+                        var authorName = blog.User?.UserName ?? "Unknown";
+                        <article class="blog-card">
+                            <div class="blog-card-header">
+                                <div class="blog-avatar">@Initials(authorName)</div>
+                                <span class="blog-meta">
+                                    <strong>@authorName</strong>
+                                    <span class="dot">·</span>
+                                    @RelativeTime(blog.CreatedAt)
+                                </span>
+                                @if (blog.Status == "DRAFT")
+                                {
+                                    <span class="status-pill draft">Draft</span>
+                                }
+                                else if (blog.Status == "PRIVATE")
+                                {
+                                    <span class="status-pill private">Private</span>
+                                }
+                                else if (blog.Status == "PUBLISHED")
+                                {
+                                    <span class="status-pill published">Published</span>
+                                }
+                                <span class="blog-badge p@(blog.Priority)">P@(blog.Priority)</span>
+                            </div>
+
+                            <a asp-action="Detail" asp-route-id="@blog.Id" asp-route-from="mine"
+                               class="blog-title" title="@blog.Title">
+                                @blog.Title
+                            </a>
+
+                            <p class="blog-excerpt">@Excerpt(blog.Content)</p>
+
+                            <div class="blog-actions">
+                                @if (blog.Status == "DRAFT")
+                                {
+                                    <a asp-action="Edit" asp-route-id="@blog.Id"
+                                       class="blog-action primary"
+                                       aria-label="Continue writing" title="Continue writing">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M12 20h9" />
+                                            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                        </svg>
+                                        <span class="label">Continue</span>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-action="Detail" asp-route-id="@blog.Id" asp-route-from="mine"
+                                       class="blog-action primary" aria-label="View" title="View">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                            <circle cx="12" cy="12" r="3" />
+                                        </svg>
+                                        <span class="label">View</span>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@blog.Id"
+                                       class="blog-action" aria-label="Edit" title="Edit">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M12 20h9" />
+                                            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                        </svg>
+                                        <span class="label">Edit</span>
+                                    </a>
+                                }
+                                <button type="button"
+                                        class="blog-action danger js-delete"
+                                        data-id="@blog.Id"
+                                        data-title="@blog.Title"
+                                        aria-label="Delete" title="Delete"
+                                        style="border:none;cursor:pointer;font-family:inherit">
+                                    <svg viewBox="0 0 24 24">
+                                        <polyline points="3 6 5 6 21 6" />
+                                        <path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6" />
+                                        <path d="M10 11v6M14 11v6" />
+                                        <path d="M9 6V4a2 2 0 012-2h2a2 2 0 012 2v2" />
+                                    </svg>
+                                    <span class="label">Delete</span>
+                                </button>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Delete confirmation modal (shared) -->
+    <div id="delete-modal"
+         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);
+                z-index:1000;align-items:center;justify-content:center;padding:1rem">
+        <div style="background:#fff;border-radius:6px;max-width:440px;width:100%;
+                    padding:2rem;box-shadow:0 25px 60px rgba(0,0,0,0.2)">
+            <h2 style="font-family:var(--font-display);font-size:1.35rem;
+                       letter-spacing:-0.02em;margin-bottom:0.5rem">
+                Delete this post?
+            </h2>
+            <p style="font-size:0.875rem;color:var(--gray-600);margin-bottom:1.5rem;line-height:1.6">
+                "<strong id="delete-title"></strong>" will be permanently deleted.
+                This action cannot be undone.
+            </p>
+            <div style="display:flex;justify-content:flex-end;gap:0.5rem">
+                <button type="button" id="delete-cancel" class="btn btn-ghost btn-sm">Cancel</button>
+                <form id="delete-form" method="post" action="" style="margin:0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger btn-sm">Delete post</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            // ── Tabs ──────────────────────────────────────────────
+            const tabs = document.querySelectorAll('.tab-btn');
+            const panels = document.querySelectorAll('.tab-panel');
+
+            tabs.forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    const key = tab.getAttribute('data-tab');
+                    tabs.forEach(t => t.classList.toggle('active', t === tab));
+                    panels.forEach(p => p.classList.toggle('active', p.getAttribute('data-panel') === key));
+                    history.replaceState(null, '', location.pathname + location.search + '#' + key.toLowerCase());
+                });
+            });
+
+            // Restore tab from hash on load
+            const hash = (location.hash || '').replace('#', '').toUpperCase();
+            if (hash) {
+                const target = document.querySelector('.tab-btn[data-tab="' + hash + '"]');
+                if (target) target.click();
+            }
+
+            // ── Filter form: preserve current tab hash on submit ──
+            const filterForm = document.getElementById('filter-form');
+            if (filterForm) {
+                filterForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const params = new URLSearchParams();
+                    new FormData(filterForm).forEach((value, key) => {
+                        if (value) params.append(key, value);
+                    });
+                    const query = params.toString();
+                    window.location.href = location.pathname + (query ? '?' + query : '') + location.hash;
+                });
+            }
+
+            // ── Delete modal ──────────────────────────────────────
+            const modal = document.getElementById('delete-modal');
+            const titleEl = document.getElementById('delete-title');
+            const form = document.getElementById('delete-form');
+            const cancelBtn = document.getElementById('delete-cancel');
+
+            document.querySelectorAll('.js-delete').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const id = btn.getAttribute('data-id');
+                    const title = btn.getAttribute('data-title');
+                    titleEl.textContent = title;
+                    form.action = '@Url.Action("Delete", "Blogs")/' + id;
+                    modal.style.display = 'flex';
+                });
+            });
+
+            cancelBtn.addEventListener('click', () => modal.style.display = 'none');
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') modal.style.display = 'none';
+            });
+        })();
+    </script>
+}

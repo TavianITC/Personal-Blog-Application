@@ -4,14 +4,26 @@
     ViewData["Title"] = "New Post";
 }
 
+<style>
+    /* Visibility option cards in modal — extend with card-like hover */
+    .vis-option {
+        transition: border-color var(--transition), background var(--transition),
+                    transform var(--transition);
+    }
+
+        .vis-option:hover {
+            border-color: var(--black) !important;
+            background: var(--gray-50) !important;
+            transform: translateY(-2px);
+        }
+</style>
+
+
 <div style="max-width:760px;margin:0 auto">
 
     <!-- Header -->
     <div style="margin-bottom:2rem">
-        <a asp-action="Index"
-           style="font-size:0.825rem;color:var(--gray-600);
-                  text-decoration:none;display:inline-flex;
-                  align-items:center;gap:0.35rem;margin-bottom:1rem">
+        <a asp-action="Index" class="btn btn-link" style="margin-bottom:1rem">
             ← Back to posts
         </a>
         <h1 style="font-family:var(--font-display);font-size:2rem;
@@ -75,39 +87,92 @@
                           color:var(--gray-600);margin-bottom:0.5rem">
                 Content
             </label>
-            <textarea asp-for="Content" id="Content" rows="16"
-                      style="width:100%;padding:1rem;font-size:0.9rem;
-                             border:1px solid var(--gray-200);border-radius:2px;
-                             font-family:var(--font-body);resize:vertical;display:none">
-            </textarea>
+            <input type="hidden" asp-for="Content" id="Content" />
             <div id="quill-editor" style="margin-bottom:0.5rem"></div>
             <span asp-validation-for="Content"
                   style="font-size:0.775rem;color:#c0392b;margin-top:0.35rem;display:block">
             </span>
         </div>
 
+        <!-- Hidden Status — set by buttons below -->
+        <input type="hidden" asp-for="Status" id="Status" value="DRAFT" />
+
         <!-- Actions -->
         <div style="display:flex;align-items:center;gap:0.75rem">
-            <button type="submit"
-                    style="height:46px;padding:0 1.5rem;background:var(--black);
-                           color:#fff;font-family:var(--font-body);font-size:0.875rem;
-                           font-weight:500;border:none;border-radius:2px;cursor:pointer">
-                Publish post
+            <button type="button" id="btn-save-draft" class="btn btn-secondary btn-lg">
+                Save draft
             </button>
-            <a asp-action="Index"
-               style="height:46px;padding:0 1.25rem;display:inline-flex;
-                      align-items:center;font-size:0.875rem;color:var(--gray-600);
-                      border:1px solid var(--gray-200);border-radius:2px;
-                      text-decoration:none">
-                Cancel
-            </a>
+            <button type="button" id="btn-save" class="btn btn-primary btn-lg">
+                Save
+            </button>
+            <a asp-action="Mine" class="btn btn-ghost btn-lg">Cancel</a>
         </div>
     </form>
 </div>
 
+<!-- Visibility modal -->
+<div id="visibility-modal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);
+            z-index:1000;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:#fff;border-radius:6px;max-width:520px;width:100%;
+                padding:2rem;box-shadow:0 25px 60px rgba(0,0,0,0.2)">
+        <h2 style="font-family:var(--font-display);font-size:1.4rem;
+                   letter-spacing:-0.02em;margin-bottom:0.4rem">
+            Who should see this post?
+        </h2>
+        <p style="font-size:0.85rem;color:var(--gray-600);margin-bottom:1.5rem">
+            Choose a visibility option for your post.
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.5rem">
+            <button type="button" class="vis-option" data-status="PUBLISHED"
+                    style="background:#fff;border:1px solid var(--gray-200);
+                           border-radius:4px;padding:1.25rem;text-align:left;cursor:pointer;
+                           transition:border-color 0.15s, background 0.15s">
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.6"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <strong style="font-size:0.9rem">Published</strong>
+                </div>
+                <p style="font-size:0.775rem;color:var(--gray-600);margin:0;line-height:1.5">
+                    Visible to all signed-in users.
+                </p>
+            </button>
+
+            <button type="button" class="vis-option" data-status="PRIVATE"
+                    style="background:#fff;border:1px solid var(--gray-200);
+                           border-radius:4px;padding:1.25rem;text-align:left;cursor:pointer;
+                           transition:border-color 0.15s, background 0.15s">
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.6"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                    <strong style="font-size:0.9rem">Private</strong>
+                </div>
+                <p style="font-size:0.775rem;color:var(--gray-600);margin:0;line-height:1.5">
+                    Only visible to you.
+                </p>
+            </button>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:0.5rem">
+            <button type="button" id="vis-cancel" class="btn btn-ghost btn-sm">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Quill -->
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
 
     <style>
         .ql-toolbar {
@@ -129,15 +194,18 @@
             line-height: 1.75;
         }
 
-        .ql-editor.ql-blank::before {
-            color: var(--gray-400) !important;
-            font-style: normal !important;
-        }
+            .ql-editor.ql-blank::before {
+                color: var(--gray-400) !important;
+                font-style: normal !important;
+            }
     </style>
 
-    <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        (function () {
+            const hiddenContent = document.getElementById('Content');
+            const form = hiddenContent.closest('form');
+
             const quill = new Quill('#quill-editor', {
                 theme: 'snow',
                 placeholder: 'Write your post content here...',
@@ -152,34 +220,59 @@
                 }
             });
 
-            // Load existing content if available
-            const existing = document.getElementById('Content').value;
-            if (existing) {
-                quill.root.innerHTML = existing;
+            // Load existing content (Edit mode) — use Quill API, not innerHTML assignment
+            if (hiddenContent.value) {
+                quill.clipboard.dangerouslyPasteHTML(hiddenContent.value);
             }
 
-            // Handle form submission
-            document.querySelector('form').addEventListener('submit', function (e) {
-                const delta = quill.getContents();
-                const html = quill.root.innerHTML;
-                const text = quill.getText().trim();
+            // Quill's empty state is still DOM "<p><br></p>" — normalize to "" for [Required]
+            function syncContent() {
+                const isEmpty = quill.getText().trim().length === 0;
+                hiddenContent.value = isEmpty ? '' : quill.root.innerHTML;
+            }
 
-                console.log('Delta:', delta);
-                console.log('HTML:', html);
-                console.log('Text:', text);
+            // Keep hidden input in sync as user types (so jQuery unobtrusive validation sees the value)
+            quill.on('text-change', syncContent);
 
-                // Validation: check if content is not empty
-                if (!text || text === '' || text.length === 0) {
-                    e.preventDefault();
-                    alert('Please write some content before publishing.');
-                    return false;
+            // Safety net: sync once more right before the form is submitted
+            form.addEventListener('submit', syncContent);
+
+            // ── Status / visibility flow ─────────────────────────────────
+            const statusInput = document.getElementById('Status');
+            const modal = document.getElementById('visibility-modal');
+
+            function submitWithStatus(status) {
+                statusInput.value = status;
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();          // triggers validation + submit
+                } else {
+                    form.submit();
                 }
+            }
 
-                // Set the textarea value to the HTML content
-                document.getElementById('Content').value = html;
-                console.log('Content set to:', document.getElementById('Content').value);
-                return true;
+            document.getElementById('btn-save-draft').addEventListener('click', function () {
+                submitWithStatus('DRAFT');
             });
-        });
+
+            document.getElementById('btn-save').addEventListener('click', function () {
+                modal.style.display = 'flex';
+            });
+
+            document.getElementById('vis-cancel').addEventListener('click', function () {
+                modal.style.display = 'none';
+            });
+
+            // Close on backdrop click
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+
+            // Visibility option click → submit with chosen status (hover handled in CSS)
+            document.querySelectorAll('.vis-option').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    submitWithStatus(btn.getAttribute('data-status'));
+                });
+            });
+        })();
     </script>
 }

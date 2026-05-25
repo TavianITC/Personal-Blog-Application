@@ -1,6 +1,37 @@
-﻿@{
+﻿@using System.Text.RegularExpressions
+@model Personal_Blog_Application.ViewModels.HomeIndexViewModel
+
+@{
     ViewData["Title"] = "Home";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    string Excerpt(string html, int max = 140)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+        var text = Regex.Replace(html, "<.*?>", " ");
+        text = System.Net.WebUtility.HtmlDecode(text);
+        text = Regex.Replace(text, @"\s+", " ").Trim();
+        return text.Length <= max ? text : text.Substring(0, max).TrimEnd() + "…";
+    }
+
+    string Initials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(new[] { ' ', '.', '@', '_', '-' },
+            StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1) return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+        return (parts[0][0].ToString() + parts[^1][0].ToString()).ToUpper();
+    }
+
+    string RelativeTime(DateTime utc)
+    {
+        var diff = DateTime.UtcNow - utc;
+        if (diff.TotalMinutes < 1) return "just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return utc.ToLocalTime().ToString("MMM dd, yyyy");
+    }
 }
 
 <style>
@@ -65,53 +96,7 @@
         flex-wrap: wrap;
     }
 
-    .btn-primary {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        height: 48px;
-        padding: 0 1.5rem;
-        background: var(--black);
-        color: var(--white);
-        font-family: var(--font-body);
-        font-size: 0.875rem;
-        font-weight: 500;
-        border-radius: var(--radius);
-        text-decoration: none;
-        transition: opacity var(--transition), transform var(--transition);
-    }
-
-        .btn-primary:hover {
-            opacity: 0.85;
-            color: var(--white);
-        }
-
-        .btn-primary:active {
-            transform: scale(0.98);
-        }
-
-    .btn-secondary {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        height: 48px;
-        padding: 0 1.5rem;
-        background: var(--white);
-        color: var(--black);
-        font-family: var(--font-body);
-        font-size: 0.875rem;
-        font-weight: 400;
-        border: 1px solid var(--gray-300);
-        border-radius: var(--radius);
-        text-decoration: none;
-        transition: background var(--transition), border-color var(--transition);
-    }
-
-        .btn-secondary:hover {
-            background: var(--gray-100);
-            color: var(--black);
-            border-color: var(--gray-400);
-        }
+    /* .btn-primary / .btn-secondary come from shared system in _Layout.cshtml */
 
     /* Arrow icon */
     .arrow {
@@ -336,7 +321,9 @@
         z-index: 1;
     }
 
-    .btn-white {
+    /* Dark CTA-strip buttons — context-specific; named with cta- prefix
+       to avoid colliding with the global .btn-ghost (light variant). */
+    .cta-btn-light {
         display: inline-flex;
         align-items: center;
         height: 44px;
@@ -348,15 +335,20 @@
         font-weight: 500;
         border-radius: var(--radius);
         text-decoration: none;
-        transition: opacity var(--transition);
+        transition: opacity var(--transition), transform var(--transition);
     }
 
-        .btn-white:hover {
+        .cta-btn-light:hover {
             opacity: 0.9;
             color: var(--black);
+            transform: translateY(-1px);
         }
 
-    .btn-ghost {
+        .cta-btn-light:active {
+            transform: translateY(0);
+        }
+
+    .cta-btn-outline {
         display: inline-flex;
         align-items: center;
         height: 44px;
@@ -368,12 +360,149 @@
         border: 1px solid rgba(255,255,255,0.15);
         border-radius: var(--radius);
         text-decoration: none;
-        transition: all var(--transition);
+        transition: color var(--transition), border-color var(--transition),
+                    background var(--transition), transform var(--transition);
     }
 
-        .btn-ghost:hover {
+        .cta-btn-outline:hover {
             color: var(--white);
             border-color: rgba(255,255,255,0.35);
+            background: rgba(255,255,255,0.05);
+            transform: translateY(-1px);
+        }
+
+        .cta-btn-outline:active {
+            transform: translateY(0);
+        }
+
+    /* ── Feed ── */
+    .feed-section {
+        padding: 2rem 0 4rem;
+    }
+
+    .feed-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .feed-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--gray-400);
+        margin: 0;
+    }
+
+    .feed-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .feed-card {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        transition: border-color var(--transition), transform var(--transition);
+    }
+
+        .feed-card:hover {
+            border-color: var(--gray-400);
+            transform: translateY(-2px);
+            color: inherit;
+            text-decoration: none;
+        }
+
+    .feed-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .feed-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--gray-200);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--gray-600);
+        flex-shrink: 0;
+    }
+
+    .feed-meta {
+        font-size: 0.75rem;
+        color: var(--gray-600);
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+        .feed-meta strong {
+            font-weight: 500;
+            color: var(--black);
+        }
+
+    .feed-badge {
+        font-size: 0.65rem;
+        font-weight: 500;
+        padding: 0.2rem 0.5rem;
+        border-radius: 100px;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        flex-shrink: 0;
+    }
+
+        .feed-badge.p5, .feed-badge.p4 {
+            background: var(--black);
+            color: #fff;
+        }
+
+    .feed-title {
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+        line-height: 1.35;
+        letter-spacing: -0.015em;
+        margin-bottom: 0.45rem;
+        color: var(--black);
+    }
+
+    .feed-excerpt {
+        font-size: 0.825rem;
+        color: var(--gray-600);
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin: 0;
+    }
+
+    .feed-empty {
+        border: 1px dashed var(--gray-200);
+        border-radius: var(--radius-md);
+        padding: 3rem 2rem;
+        text-align: center;
+        color: var(--gray-600);
+    }
+
+        .feed-empty .feed-empty-title {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--black);
+            margin-bottom: 0.4rem;
         }
 
     /* ── Logged-in welcome ── */
@@ -402,6 +531,10 @@
 
     /* ── Responsive ── */
     @@media (max-width: 768px) {
+        .feed-grid {
+            grid-template-columns: 1fr;
+        }
+
         .hero {
             grid-template-columns: 1fr;
             padding: 3rem 0 2rem;
@@ -453,15 +586,15 @@
         <h1>Good to see you, @User.Identity.Name<em>.</em></h1>
         <p>Ready to write something today?</p>
         <div class="quick-actions">
-            <a class="btn-primary" asp-controller="Blogs" asp-action="Create">
+            <a class="btn btn-primary btn-lg" asp-controller="Blogs" asp-action="Create">
                 New post <span class="arrow">→</span>
             </a>
-            <a class="btn-secondary" asp-controller="Blogs" asp-action="Index">
+            <a class="btn btn-secondary btn-lg" asp-controller="Blogs" asp-action="Mine">
                 View my blogs
             </a>
             @if (User.IsInRole("ADMIN"))
             {
-                <a class="btn-secondary" asp-controller="Users" asp-action="Index">
+                <a class="btn btn-secondary btn-lg" asp-controller="Users" asp-action="Index">
                     Manage users
                 </a>
             }
@@ -470,33 +603,51 @@
 
     <hr class="section-divider" style="margin: 3rem 0" />
 
-    <!-- Features reminder for logged-in -->
-    <div class="features" style="padding-top:2rem">
-        <p class="features-label">What you can do</p>
-        <div class="features-grid">
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
-                </div>
-                <div class="feature-title">Write & edit</div>
-                <div class="feature-desc">Rich-text editor with headings, bold, and inline images.</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
-                </div>
-                <div class="feature-title">Comment</div>
-                <div class="feature-desc">Engage with any post. Leave thoughts and get feedback.</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>
-                </div>
-                <div class="feature-title">Profile</div>
-                <div class="feature-desc">Upload an avatar and personalise your public profile.</div>
-            </div>
+    <!-- Published feed from other users -->
+    <section class="feed-section">
+        <div class="feed-header">
+            <p class="feed-label">Latest from the community</p>
+            @if (Model.Feed.Any())
+            {
+                <span style="font-size:0.75rem;color:var(--gray-400)">
+                    @Model.Feed.Count post@(Model.Feed.Count != 1 ? "s" : "")
+                </span>
+            }
         </div>
-    </div>
+
+        @if (!Model.Feed.Any())
+        {
+            <div class="feed-empty">
+                <p class="feed-empty-title">Quiet around here.</p>
+                <p style="font-size:0.85rem;margin:0">
+                    No published posts from other writers yet — be the first to share something.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="feed-grid">
+                @foreach (var blog in Model.Feed)
+                {
+                    var authorName = blog.User?.UserName ?? "Unknown";
+                    var badgeClass = "feed-badge p" + blog.Priority;
+                    <a class="feed-card" asp-controller="Blogs" asp-action="Detail" asp-route-id="@blog.Id">
+                        <div class="feed-card-header">
+                            <div class="feed-avatar">@Initials(authorName)</div>
+                            <span class="feed-meta">
+                                <strong>@authorName</strong>
+                                <span style="color:var(--gray-400);margin:0 0.3rem">·</span>
+                                @RelativeTime(blog.CreatedAt)
+                            </span>
+                            <span class="@badgeClass">P@(blog.Priority)</span>
+                        </div>
+                        <div class="feed-title">@blog.Title</div>
+                        <p class="feed-excerpt">@Excerpt(blog.Content)</p>
+                    </a>
+                }
+            </div>
+        }
+    </section>
 }
 else
 {
@@ -514,10 +665,10 @@ else
                 Share with your community. All in one minimal platform.
             </p>
             <div class="hero-actions">
-                <a class="btn-primary" asp-controller="Auth" asp-action="Register">
+                <a class="btn btn-primary btn-lg" asp-controller="Auth" asp-action="Register">
                     Get started free <span class="arrow">→</span>
                 </a>
-                <a class="btn-secondary" asp-controller="Auth" asp-action="Login">
+                <a class="btn btn-secondary btn-lg" asp-controller="Auth" asp-action="Login">
                     Sign in
                 </a>
             </div>
@@ -594,8 +745,8 @@ else
             <p>Free to join. No credit card required.</p>
         </div>
         <div class="cta-strip-actions">
-            <a class="btn-white" asp-controller="Auth" asp-action="Register">Create account</a>
-            <a class="btn-ghost" asp-controller="Auth" asp-action="Login">Sign in</a>
+            <a class="cta-btn-light" asp-controller="Auth" asp-action="Register">Create account</a>
+            <a class="cta-btn-outline" asp-controller="Auth" asp-action="Login">Sign in</a>
         </div>
     </div>
 }
