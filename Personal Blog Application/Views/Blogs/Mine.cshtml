@@ -344,6 +344,11 @@
             color: #3b3f87;
         }
 
+        .status-pill.published {
+            background: #e6ffed;
+            color: #1a7f37;
+        }
+
     /* ── Filter bar ── */
     .filter-bar {
         display: flex;
@@ -541,6 +546,10 @@ else
                                 else if (blog.Status == "PRIVATE")
                                 {
                                     <span class="status-pill private">Private</span>
+                                }
+                                else if (blog.Status == "PUBLISHED")
+                                {
+                                    <span class="status-pill published">Published</span>
                                 }
                                 <span class="blog-badge p@(blog.Priority)">P@(blog.Priority)</span>
                             </div>
