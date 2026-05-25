@@ -1,0 +1,283 @@
+@model Personal_Blog_Application.Models.Blog
+
+@{
+    ViewData["Title"] = Model.Title;
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var canEdit = User.IsInRole("ADMIN") || Model.CreatedBy == userId;
+
+    string Initials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(new[] { ' ', '.', '@', '_', '-' },
+            System.StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+            return parts[0].Substring(0, System.Math.Min(2, parts[0].Length)).ToUpper();
+        return (parts[0][0].ToString() + parts[^1][0].ToString()).ToUpper();
+    }
+
+    string RelativeTime(System.DateTime utc)
+    {
+        var diff = System.DateTime.UtcNow - utc;
+        if (diff.TotalMinutes < 1) return "just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return utc.ToLocalTime().ToString("MMM dd, yyyy");
+    }
+
+    var authorName = Model.User?.UserName ?? "Unknown";
+}
+
+<style>
+    .detail-wrap {
+        max-width: 760px;
+        margin: 0 auto;
+    }
+
+    .detail-back {
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.85rem;
+        color: var(--gray-600);
+    }
+
+    .detail-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--gray-200);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--gray-600);
+        flex-shrink: 0;
+    }
+
+    .detail-author strong {
+        font-weight: 500;
+        color: var(--black);
+    }
+
+    .detail-author .dot {
+        color: var(--gray-400);
+        margin: 0 0.35rem;
+    }
+
+    .detail-title {
+        font-family: var(--font-display);
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        margin-bottom: 1.5rem;
+        color: var(--black);
+    }
+
+    .detail-badges {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .detail-badge {
+        font-size: 0.72rem;
+        font-weight: 500;
+        padding: 0.3rem 0.7rem;
+        border-radius: 100px;
+        background: var(--gray-100);
+        color: var(--gray-600);
+    }
+
+        .detail-badge.priority-5 {
+            background: #0a0a0a;
+            color: #fff;
+        }
+
+        .detail-badge.priority-4 {
+            background: #262626;
+            color: #fff;
+        }
+
+        .detail-badge.status-draft {
+            background: #fff7e6;
+            color: #b54708;
+        }
+
+        .detail-badge.status-private {
+            background: #f0f1ff;
+            color: #3b3f87;
+        }
+
+    .detail-content {
+        font-size: 1.05rem;
+        line-height: 1.85;
+        color: var(--gray-800);
+        margin-bottom: 3rem;
+    }
+
+        .detail-content h2 {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            letter-spacing: -0.02em;
+            margin: 2rem 0 1rem;
+        }
+
+        .detail-content h3 {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            letter-spacing: -0.02em;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .detail-content p {
+            margin-bottom: 1rem;
+        }
+
+        .detail-content ul, .detail-content ol {
+            margin: 0 0 1rem 1.5rem;
+        }
+
+            .detail-content ul li, .detail-content ol li {
+                margin-bottom: 0.35rem;
+            }
+
+        .detail-content a {
+            color: var(--black);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .detail-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--radius-md);
+            margin: 1rem 0;
+        }
+
+        .detail-content blockquote {
+            border-left: 3px solid var(--gray-300);
+            padding-left: 1.25rem;
+            margin: 1.5rem 0;
+            color: var(--gray-600);
+            font-style: italic;
+        }
+
+    .detail-footer {
+        border-top: 1px solid var(--gray-200);
+        padding-top: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .detail-footer-info {
+        font-size: 0.8rem;
+        color: var(--gray-400);
+        margin-right: auto;
+    }
+</style>
+
+<div class="detail-wrap">
+
+    <a asp-action="Index" class="btn btn-link detail-back">← Back to posts</a>
+
+    <div class="detail-meta">
+        <div class="detail-avatar">@Initials(authorName)</div>
+        <span class="detail-author">
+            <strong>@authorName</strong>
+            <span class="dot">·</span>
+            @RelativeTime(Model.CreatedAt)
+            @if (Model.UpdatedAt.HasValue && Model.UpdatedAt.Value > Model.CreatedAt.AddMinutes(1))
+            {
+                <span class="dot">·</span>
+                <span>edited @RelativeTime(Model.UpdatedAt.Value)</span>
+            }
+        </span>
+    </div>
+
+    <h1 class="detail-title">@Model.Title</h1>
+
+    <div class="detail-badges">
+        <span class="detail-badge priority-@Model.Priority">P@(Model.Priority)</span>
+        @if (Model.Status == "DRAFT")
+        {
+            <span class="detail-badge status-draft">Draft</span>
+        }
+        else if (Model.Status == "PRIVATE")
+        {
+            <span class="detail-badge status-private">Private</span>
+        }
+    </div>
+
+    <article class="detail-content">
+        @Html.Raw(Model.Content)
+    </article>
+
+    <div class="detail-footer">
+        <span class="detail-footer-info">
+            Posted @Model.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy 'at' HH:mm")
+        </span>
+
+        @if (canEdit)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-secondary btn-sm">
+                Edit
+            </a>
+            <button type="button" class="btn btn-danger btn-sm" id="open-delete">
+                Delete
+            </button>
+        }
+    </div>
+</div>
+
+@if (canEdit)
+{
+    <!-- Delete confirmation modal -->
+    <div id="delete-modal"
+         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);
+                z-index:1000;align-items:center;justify-content:center;padding:1rem">
+        <div style="background:#fff;border-radius:6px;max-width:440px;width:100%;
+                    padding:2rem;box-shadow:0 25px 60px rgba(0,0,0,0.2)">
+            <h2 style="font-family:var(--font-display);font-size:1.35rem;
+                       letter-spacing:-0.02em;margin-bottom:0.5rem">
+                Delete this post?
+            </h2>
+            <p style="font-size:0.875rem;color:var(--gray-600);margin-bottom:1.5rem;line-height:1.6">
+                "<strong>@Model.Title</strong>" will be permanently deleted. This action cannot be undone.
+            </p>
+            <div style="display:flex;justify-content:flex-end;gap:0.5rem">
+                <button type="button" id="cancel-delete" class="btn btn-ghost btn-sm">Cancel</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" style="margin:0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger btn-sm">Delete post</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const modal = document.getElementById('delete-modal');
+            const openBtn = document.getElementById('open-delete');
+            const cancelBtn = document.getElementById('cancel-delete');
+
+            openBtn.addEventListener('click', () => modal.style.display = 'flex');
+            cancelBtn.addEventListener('click', () => modal.style.display = 'none');
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') modal.style.display = 'none';
+            });
+        })();
+    </script>
+}

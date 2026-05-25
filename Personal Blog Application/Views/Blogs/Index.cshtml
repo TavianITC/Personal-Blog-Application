@@ -2,8 +2,15 @@
 @model List<Personal_Blog_Application.Models.Blog>
 
 @{
-    ViewData["Title"] = "My Blogs";
+    ViewData["Title"] = "Posts";
+
     var isAdmin = User.IsInRole("ADMIN");
+    var filterTitle = ViewBag.FilterTitle as string;
+    var filterAuthor = ViewBag.FilterAuthor as string;
+    var filterSort = ViewBag.FilterSort as string;
+    var hasFilters = !string.IsNullOrWhiteSpace(filterTitle)
+                  || !string.IsNullOrWhiteSpace(filterAuthor)
+                  || !string.IsNullOrWhiteSpace(filterSort);
 
     string Excerpt(string html, int max = 180)
     {
@@ -32,99 +39,122 @@
         if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
         return utc.ToLocalTime().ToString("MMM dd, yyyy");
     }
-
-    var groups = new (string Key, string Label, List<Personal_Blog_Application.Models.Blog> Items)[]
-    {
-        ("PUBLISHED", "Published", Model.Where(b => b.Status == "PUBLISHED").ToList()),
-        ("PRIVATE",   "Private",   Model.Where(b => b.Status == "PRIVATE").ToList()),
-        ("DRAFT",     "Drafts",    Model.Where(b => b.Status == "DRAFT").ToList())
-    };
 }
 
 <style>
-    .blogs-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+    /* ── Header (Posts) ── */
+    .posts-header {
         margin-bottom: 1.5rem;
     }
 
-    /* ── Tabs ── */
-    .tabs {
-        display: flex;
-        gap: 0;
-        border-bottom: 1px solid var(--gray-200);
-        margin-bottom: 2rem;
-    }
-
-    .tab-btn {
-        background: transparent;
-        border: none;
-        padding: 0.85rem 1.25rem;
-        font-family: var(--font-body);
-        font-size: 0.875rem;
-        color: var(--gray-600);
-        cursor: pointer;
-        position: relative;
+    .posts-eyebrow {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        transition: color var(--transition);
-    }
-
-        .tab-btn:hover {
-            color: var(--black);
-        }
-
-        .tab-btn.active {
-            color: var(--black);
-            font-weight: 500;
-        }
-
-            .tab-btn.active::after {
-                content: '';
-                position: absolute;
-                left: 0;
-                right: 0;
-                bottom: -1px;
-                height: 2px;
-                background: var(--black);
-            }
-
-    .tab-count {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 22px;
-        height: 20px;
-        padding: 0 0.45rem;
+        gap: 0.4rem;
         font-size: 0.7rem;
         font-weight: 500;
-        background: var(--gray-100);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
         color: var(--gray-600);
+        background: var(--gray-100);
+        padding: 0.3rem 0.65rem;
         border-radius: 100px;
+        margin-bottom: 0.85rem;
     }
 
-    .tab-btn.active .tab-count {
-        background: var(--black);
-        color: #fff;
-    }
-
-    .tab-panel {
-        display: none;
-    }
-
-        .tab-panel.active {
-            display: block;
+        .posts-eyebrow::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--black);
         }
 
-    .blogs-grid {
+    .posts-header h1 {
+        font-family: var(--font-display);
+        font-size: clamp(2rem, 4vw, 2.75rem);
+        letter-spacing: -0.03em;
+        margin-bottom: 0.4rem;
+    }
+
+    .posts-header p {
+        font-size: 0.925rem;
+        color: var(--gray-600);
+        margin: 0 0 1rem;
+        max-width: 540px;
+        line-height: 1.6;
+    }
+
+    .posts-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+    }
+
+    .posts-count {
+        font-size: 0.85rem;
+        color: var(--gray-600);
+    }
+
+    .toolbar-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-input,
+    .filter-select {
+        height: 38px;
+        padding: 0 0.9rem;
+        font-family: var(--font-body);
+        font-size: 0.85rem;
+        color: var(--black);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius);
+        background: var(--gray-50);
+        outline: none;
+        transition: border-color var(--transition), background var(--transition);
+    }
+
+        .filter-input::placeholder {
+            color: var(--gray-400);
+        }
+
+        .filter-input:focus,
+        .filter-select:focus {
+            border-color: var(--black);
+            background: var(--white);
+        }
+
+    .filter-input {
+        min-width: 200px;
+        flex: 1 1 200px;
+    }
+
+    .filter-select {
+        cursor: pointer;
+        min-width: 200px;
+    }
+
+    /* ── Card grid ── */
+    .posts-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 1.25rem;
     }
 
-    .blog-card {
+    .post-card {
         position: relative;
         background: var(--white);
         border: 1px solid var(--gray-200);
@@ -132,22 +162,26 @@
         padding: 1.75rem;
         display: flex;
         flex-direction: column;
+        text-decoration: none;
+        color: inherit;
         transition: border-color var(--transition), transform var(--transition);
     }
 
-        .blog-card:hover {
+        .post-card:hover {
             border-color: var(--gray-400);
             transform: translateY(-2px);
+            color: inherit;
+            text-decoration: none;
         }
 
-    .blog-card-header {
+    .post-card-header {
         display: flex;
         align-items: center;
         gap: 0.6rem;
         margin-bottom: 1rem;
     }
 
-    .blog-avatar {
+    .post-avatar {
         width: 32px;
         height: 32px;
         border-radius: 50%;
@@ -161,7 +195,7 @@
         flex-shrink: 0;
     }
 
-    .blog-meta {
+    .post-meta {
         font-size: 0.775rem;
         color: var(--gray-600);
         flex: 1;
@@ -170,17 +204,17 @@
         text-overflow: ellipsis;
     }
 
-        .blog-meta strong {
+        .post-meta strong {
             font-weight: 500;
             color: var(--black);
         }
 
-        .blog-meta .dot {
+        .post-meta .dot {
             color: var(--gray-400);
             margin: 0 0.35rem;
         }
 
-    .blog-badge {
+    .post-badge {
         font-size: 0.7rem;
         font-weight: 500;
         padding: 0.25rem 0.6rem;
@@ -190,148 +224,43 @@
         flex-shrink: 0;
     }
 
-        .blog-badge.p5 {
+        .post-badge.p5 {
             background: #0a0a0a;
             color: #fff;
         }
 
-        .blog-badge.p4 {
+        .post-badge.p4 {
             background: #262626;
             color: #fff;
         }
 
-        .blog-badge.p3 {
+        .post-badge.p3 {
             background: #e8e8e8;
             color: #0a0a0a;
         }
 
-        .blog-badge.p2 {
+        .post-badge.p2 {
             background: #f4f4f4;
             color: #525252;
         }
 
-        .blog-badge.p1 {
+        .post-badge.p1 {
             background: #fafafa;
             color: #a0a0a0;
-        }
-
-    .blog-title {
-        font-family: var(--font-display);
-        font-size: 1.25rem;
-        line-height: 1.3;
-        letter-spacing: -0.02em;
-        color: var(--black);
-        margin-bottom: 0.6rem;
-        text-decoration: none;
-        display: block;
-    }
-
-        .blog-title:hover {
-            color: var(--black);
-            text-decoration: none;
-        }
-
-    .blog-excerpt {
-        font-size: 0.875rem;
-        color: var(--gray-600);
-        line-height: 1.65;
-        margin-bottom: 0;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        flex: 1;
-    }
-
-    .blog-actions {
-        position: absolute;
-        bottom: 0.75rem;
-        right: 0.75rem;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-        opacity: 0;
-        transition: opacity var(--transition);
-    }
-
-    .blog-card:hover .blog-actions,
-    .blog-card:focus-within .blog-actions {
-        opacity: 1;
-    }
-
-    .blog-action {
-        display: inline-flex;
-        align-items: center;
-        gap: 0;
-        height: 30px;
-        padding: 0 0.4rem;
-        font-size: 0.75rem;
-        color: var(--gray-600);
-        background: var(--white);
-        text-decoration: none;
-        border-radius: var(--radius);
-        transition: background var(--transition), color var(--transition), gap var(--transition);
-        overflow: hidden;
-    }
-
-        .blog-action svg {
-            width: 14px;
-            height: 14px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 1.6;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            flex-shrink: 0;
-        }
-
-        .blog-action .label {
-            max-width: 0;
-            opacity: 0;
-            white-space: nowrap;
-            transition: max-width var(--transition), opacity var(--transition);
-        }
-
-        .blog-action:hover {
-            background: var(--gray-100);
-            color: var(--black);
-            gap: 0.4rem;
-        }
-
-            .blog-action:hover .label {
-                max-width: 80px;
-                opacity: 1;
-            }
-
-        .blog-action.primary {
-            color: var(--black);
-        }
-
-    .empty-state {
-        text-align: center;
-        padding: 4rem 0;
-        color: var(--gray-400);
-    }
-
-        .empty-state .empty-title {
-            font-family: var(--font-display);
-            font-size: 1.25rem;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.5rem;
-            color: var(--gray-600);
         }
 
     .status-pill {
         display: inline-flex;
         align-items: center;
-        gap: 0.3rem;
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         font-weight: 500;
-        padding: 0.2rem 0.55rem;
+        padding: 0.18rem 0.5rem;
         border-radius: 100px;
         background: var(--gray-100);
         color: var(--gray-600);
         flex-shrink: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
 
         .status-pill.draft {
@@ -344,169 +273,191 @@
             color: #3b3f87;
         }
 
+    .admin-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.72rem;
+        color: var(--gray-600);
+        background: var(--gray-100);
+        padding: 0.35rem 0.75rem;
+        border-radius: 100px;
+        margin-left: 0.5rem;
+    }
+
+        .admin-note::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #b54708;
+        }
+
+    .post-title {
+        font-family: var(--font-display);
+        font-size: 1.3rem;
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+        color: var(--black);
+        margin-bottom: 0.6rem;
+    }
+
+    .post-excerpt {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        line-height: 1.65;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 0;
+        color: var(--gray-400);
+    }
+
+        .empty-state .empty-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            color: var(--gray-600);
+        }
+
     @@media (max-width: 768px) {
-        .blogs-grid {
+        .posts-grid {
             grid-template-columns: 1fr;
         }
     }
 </style>
 
-<div class="blogs-header">
-    <div>
-        <h1 style="font-family:var(--font-display);font-size:2rem;
-                   letter-spacing:-0.03em;margin-bottom:0.25rem">
-            @(isAdmin ? "All Posts" : "My Posts")
-        </h1>
-        <p style="font-size:0.875rem;color:var(--gray-600);margin:0">
-            @Model.Count post@(Model.Count != 1 ? "s" : "") total
-        </p>
-    </div>
-    <a asp-action="Create" class="btn btn-primary">+ New post</a>
+<!-- Header section -->
+<div class="posts-header">
+    <span class="posts-eyebrow">@(isAdmin ? "Admin" : "Community")</span>
+    <h1>Posts</h1>
+    <p>
+        @if (isAdmin)
+        {
+            <text>
+                You're viewing every post in the system — including drafts and
+                private posts from other authors. Filter or sort to narrow it down.
+            </text>
+        }
+        else
+        {
+            <text>
+                Latest writing from across the community. Discover what other
+                authors are publishing — search by title or filter by name.
+            </text>
+        }
+    </p>
 </div>
+
+<div class="posts-toolbar">
+    <span class="posts-count">
+        @Model.Count post@(Model.Count != 1 ? "s" : "") @(hasFilters ? "found" : isAdmin ? "total" : "published")
+        @if (isAdmin)
+        {
+            <span class="admin-note">Admin view — all statuses</span>
+        }
+    </span>
+    <div class="toolbar-actions">
+        <a asp-action="Mine" class="btn btn-secondary btn-sm">My blogs</a>
+        <a asp-action="Create" class="btn btn-primary btn-sm">+ New post</a>
+    </div>
+</div>
+
+<!-- Filter bar -->
+<form method="get" class="filter-bar" id="filter-form">
+    <input type="text" name="title" value="@filterTitle" placeholder="Search title…" class="filter-input" />
+    <input type="text" name="author" value="@filterAuthor" placeholder="Author…" class="filter-input" />
+    <select name="sort" class="filter-select">
+        <option value="" selected="@(string.IsNullOrEmpty(filterSort))">Sort: Newest</option>
+        <option value="priority_desc" selected="@(filterSort == "priority_desc" || filterSort == "priority")">
+            Sort: Priority — High to low
+        </option>
+        <option value="priority_asc" selected="@(filterSort == "priority_asc")">
+            Sort: Priority — Low to high
+        </option>
+    </select>
+    <button type="submit" class="btn btn-secondary btn-sm">Apply</button>
+    @if (hasFilters)
+    {
+        <a asp-action="Index" class="btn btn-ghost btn-sm">Clear</a>
+    }
+</form>
 
 @if (!Model.Any())
 {
-    <div class="empty-state">
-        <p class="empty-title">No posts yet</p>
-        <p style="font-size:0.875rem;margin-bottom:1.5rem">
-            Start writing your first blog post.
-        </p>
-        <a asp-action="Create" class="btn btn-primary">Create post</a>
-    </div>
+    if (hasFilters)
+    {
+        <div class="empty-state">
+            <p class="empty-title">No posts match</p>
+            <p style="font-size:0.875rem;margin-bottom:1.5rem">
+                Try a different keyword or clear your filters.
+            </p>
+            <a asp-action="Index" class="btn btn-secondary">Clear filters</a>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <p class="empty-title">Quiet around here</p>
+            <p style="font-size:0.875rem;margin-bottom:1.5rem">
+                Nobody has published anything yet. Be the first.
+            </p>
+            <a asp-action="Create" class="btn btn-primary">Write the first post</a>
+        </div>
+    }
 }
 else
 {
-    <!-- Tabs -->
-    <div class="tabs" role="tablist">
-        @for (var i = 0; i < groups.Length; i++)
+    <div class="posts-grid">
+        @foreach (var blog in Model)
         {
-            var g = groups[i];
-            <button type="button" class="tab-btn @(i == 0 ? "active" : "")"
-                    data-tab="@g.Key" role="tab">
-                @g.Label
-                <span class="tab-count">@g.Items.Count</span>
-            </button>
+            var authorName = blog.User?.UserName ?? "Unknown";
+            <a class="post-card" asp-action="Detail" asp-route-id="@blog.Id">
+                <div class="post-card-header">
+                    <div class="post-avatar">@Initials(authorName)</div>
+                    <span class="post-meta">
+                        <strong>@authorName</strong>
+                        <span class="dot">·</span>
+                        @RelativeTime(blog.CreatedAt)
+                    </span>
+                    @if (blog.Status == "DRAFT")
+                    {
+                        <span class="status-pill draft">Draft</span>
+                    }
+                    else if (blog.Status == "PRIVATE")
+                    {
+                        <span class="status-pill private">Private</span>
+                    }
+                    <span class="post-badge p@(blog.Priority)">P@(blog.Priority)</span>
+                </div>
+                <div class="post-title">@blog.Title</div>
+                <p class="post-excerpt">@Excerpt(blog.Content)</p>
+            </a>
         }
     </div>
 
-    <!-- Panels -->
-    @for (var i = 0; i < groups.Length; i++)
-    {
-        var g = groups[i];
-        <div class="tab-panel @(i == 0 ? "active" : "")" data-panel="@g.Key">
-            @if (!g.Items.Any())
-            {
-                <div class="empty-state">
-                    <p class="empty-title">No @g.Label.ToLower() posts</p>
-                    <p style="font-size:0.875rem">
-                        @switch (g.Key)
-                        {
-                            case "DRAFT":
-                                <text>Drafts you save will show up here so you can keep writing.</text>
-                                break;
-                            case "PRIVATE":
-                                <text>Posts marked as private will appear here. Only you can see them.</text>
-                                break;
-                            default:
-                                <text>Publish a post to share it with everyone.</text>
-                                break;
-                        }
-                    </p>
-                </div>
-            }
-            else
-            {
-                <div class="blogs-grid">
-                    @foreach (var blog in g.Items)
-                    {
-                        var authorName = blog.User?.UserName ?? "Unknown";
-                        <article class="blog-card">
-                            <div class="blog-card-header">
-                                <div class="blog-avatar">@Initials(authorName)</div>
-                                <span class="blog-meta">
-                                    <strong>@authorName</strong>
-                                    <span class="dot">·</span>
-                                    @RelativeTime(blog.CreatedAt)
-                                </span>
-                                @if (blog.Status == "DRAFT")
-                                {
-                                    <span class="status-pill draft">Draft</span>
-                                }
-                                else if (blog.Status == "PRIVATE")
-                                {
-                                    <span class="status-pill private">Private</span>
-                                }
-                                <span class="blog-badge p@(blog.Priority)">P@(blog.Priority)</span>
-                            </div>
-
-                            <a asp-action="Detail" asp-route-id="@blog.Id" class="blog-title"
-                               title="@blog.Title">
-                                @blog.Title
-                            </a>
-
-                            <p class="blog-excerpt">@Excerpt(blog.Content)</p>
-
-                            <div class="blog-actions">
-                                @if (blog.Status == "DRAFT")
-                                {
-                                    <a asp-action="Edit" asp-route-id="@blog.Id"
-                                       class="blog-action primary"
-                                       aria-label="Continue writing" title="Continue writing">
-                                        <svg viewBox="0 0 24 24">
-                                            <path d="M12 20h9" />
-                                            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                                        </svg>
-                                        <span class="label">Continue</span>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <a asp-action="Detail" asp-route-id="@blog.Id"
-                                       class="blog-action primary" aria-label="View" title="View">
-                                        <svg viewBox="0 0 24 24">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                            <circle cx="12" cy="12" r="3" />
-                                        </svg>
-                                        <span class="label">View</span>
-                                    </a>
-                                    <a asp-action="Edit" asp-route-id="@blog.Id"
-                                       class="blog-action" aria-label="Edit" title="Edit">
-                                        <svg viewBox="0 0 24 24">
-                                            <path d="M12 20h9" />
-                                            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                                        </svg>
-                                        <span class="label">Edit</span>
-                                    </a>
-                                }
-                            </div>
-                        </article>
-                    }
-                </div>
-            }
-        </div>
-    }
-
     <script>
         (function () {
-            const tabs = document.querySelectorAll('.tab-btn');
-            const panels = document.querySelectorAll('.tab-panel');
-
-            tabs.forEach(function (tab) {
-                tab.addEventListener('click', function () {
-                    const key = tab.getAttribute('data-tab');
-                    tabs.forEach(t => t.classList.toggle('active', t === tab));
-                    panels.forEach(p => p.classList.toggle('active', p.getAttribute('data-panel') === key));
-                    // Persist in URL hash so refresh keeps tab
-                    history.replaceState(null, '', '#' + key.toLowerCase());
+            const form = document.getElementById('filter-form');
+            if (!form) return;
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const params = new URLSearchParams();
+                new FormData(form).forEach((value, key) => {
+                    if (value) params.append(key, value);
                 });
+                const query = params.toString();
+                window.location.href = location.pathname + (query ? '?' + query : '');
             });
-
-            // Restore tab from hash on load
-            const hash = (location.hash || '').replace('#', '').toUpperCase();
-            if (hash) {
-                const target = document.querySelector('.tab-btn[data-tab="' + hash + '"]');
-                if (target) target.click();
-            }
         })();
     </script>
 }

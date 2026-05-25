@@ -465,7 +465,8 @@
             <div class="nav-links">
                 @if (User.Identity!.IsAuthenticated)
                 {
-                    <a class="nav-link" asp-controller="Blogs" asp-action="Index">My Blogs</a>
+                    <a class="nav-link" asp-controller="Blogs" asp-action="Index">Posts</a>
+                    <a class="nav-link" asp-controller="Blogs" asp-action="Mine">My Blogs</a>
 
                     @if (User.IsInRole("ADMIN"))
                     {
@@ -546,7 +547,8 @@
         <div class="nav-mobile" id="mobileMenu">
             @if (User.Identity!.IsAuthenticated)
             {
-                <a class="nav-link" asp-controller="Blogs" asp-action="Index">My Blogs</a>
+                <a class="nav-link" asp-controller="Blogs" asp-action="Index">Posts</a>
+                <a class="nav-link" asp-controller="Blogs" asp-action="Mine">My Blogs</a>
                 @if (User.IsInRole("ADMIN"))
                 {
                     <a class="nav-link" asp-controller="Users" asp-action="Index">Users</a>
