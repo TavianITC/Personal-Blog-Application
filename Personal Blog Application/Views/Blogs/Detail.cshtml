@@ -5,6 +5,11 @@
     var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     var canEdit = User.IsInRole("ADMIN") || Model.CreatedBy == userId;
 
+    // Where did the user come from? "mine" → back to My Posts; otherwise Posts
+    var from = Context.Request.Query["from"].ToString();
+    var backAction = from == "mine" ? "Mine" : "Index";
+    var backLabel = from == "mine" ? "Back to my posts" : "Back to posts";
+
     string Initials(string? name)
     {
         if (string.IsNullOrWhiteSpace(name)) return "?";
@@ -188,7 +193,7 @@
 
 <div class="detail-wrap">
 
-    <a asp-action="Index" class="btn btn-link detail-back">← Back to posts</a>
+    <a asp-action="@backAction" class="btn btn-link detail-back">← @backLabel</a>
 
     <div class="detail-meta">
         <div class="detail-avatar">@Initials(authorName)</div>
@@ -229,7 +234,8 @@
 
         @if (canEdit)
         {
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-secondary btn-sm">
+            <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-from="@from"
+               class="btn btn-secondary btn-sm">
                 Edit
             </a>
             <button type="button" class="btn btn-danger btn-sm" id="open-delete">

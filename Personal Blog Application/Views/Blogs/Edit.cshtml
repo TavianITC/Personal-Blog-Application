@@ -3,14 +3,19 @@
 @{
     ViewData["Title"] = "Edit Post";
     var blogId = (int)ViewBag.BlogId;
+
+    // Forward "from" so back/cancel know where to return
+    var from = Context.Request.Query["from"].ToString();
+    var backAction = from == "mine" ? "Mine" : "Index";
+    var backLabel = from == "mine" ? "Back to my posts" : "Back to posts";
 }
 
 <div style="max-width:760px;margin:0 auto">
 
     <!-- Header -->
     <div style="margin-bottom:2rem">
-        <a asp-action="Index" class="btn btn-link" style="margin-bottom:1rem">
-            ← Back to posts
+        <a asp-action="@backAction" class="btn btn-link" style="margin-bottom:1rem">
+            ← @backLabel
         </a>
         <h1 style="font-family:var(--font-display);font-size:2rem;
                    letter-spacing:-0.03em">Edit Post</h1>
@@ -106,7 +111,8 @@
         <!-- Actions -->
         <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
             <button type="submit" class="btn btn-primary btn-lg">Save changes</button>
-            <a asp-action="Detail" asp-route-id="@blogId" class="btn btn-ghost btn-lg">Cancel</a>
+            <a asp-action="Detail" asp-route-id="@blogId" asp-route-from="@from"
+               class="btn btn-ghost btn-lg">Cancel</a>
             <button type="button" id="open-delete" class="btn btn-danger btn-lg" style="margin-left:auto">
                 Delete post
             </button>

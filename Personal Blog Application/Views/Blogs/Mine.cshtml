@@ -545,8 +545,8 @@ else
                                 <span class="blog-badge p@(blog.Priority)">P@(blog.Priority)</span>
                             </div>
 
-                            <a asp-action="Detail" asp-route-id="@blog.Id" class="blog-title"
-                               title="@blog.Title">
+                            <a asp-action="Detail" asp-route-id="@blog.Id" asp-route-from="mine"
+                               class="blog-title" title="@blog.Title">
                                 @blog.Title
                             </a>
 
@@ -567,7 +567,7 @@ else
                                 }
                                 else
                                 {
-                                    <a asp-action="Detail" asp-route-id="@blog.Id"
+                                    <a asp-action="Detail" asp-route-id="@blog.Id" asp-route-from="mine"
                                        class="blog-action primary" aria-label="View" title="View">
                                         <svg viewBox="0 0 24 24">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
