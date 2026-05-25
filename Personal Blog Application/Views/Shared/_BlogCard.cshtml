@@ -1,0 +1,66 @@
+@model Personal_Blog_Application.Models.Blog
+
+@*
+    Reusable summary card used by Posts (community feed) and Home logged-in feed.
+    The whole card is a single <a> linking to Detail.
+
+    Options via ViewData:
+    - "Compact" (bool)         — smaller variant (Home feed). Defaults to false.
+    - "ShowStatusPill" (bool)  — render DRAFT/PRIVATE/PUBLISHED pill. Defaults to false.
+    - "ExcerptLength" (int)    — truncate length for excerpt. Defaults to 180.
+    - "From" (string)          — forwarded as ?from= on the Detail link.
+*@
+@{
+    var compact = ViewData["Compact"] as bool? ?? false;
+    var showStatusPill = ViewData["ShowStatusPill"] as bool? ?? false;
+    var excerptLength = ViewData["ExcerptLength"] as int? ?? 180;
+    var from = ViewData["From"] as string;
+
+    var authorName = Model.User?.UserName ?? "Unknown";
+    var wrapperClass = compact ? "blog-card-link compact" : "blog-card-link";
+    var commentCount = Model.Comments?.Count ?? 0;
+}
+
+<a class="@wrapperClass"
+   asp-controller="Blogs" asp-action="Detail"
+   asp-route-id="@Model.Id" asp-route-from="@from">
+    <div class="blog-card-link__header">
+        <div class="blog-card-link__avatar">@ViewHelpers.Initials(authorName)</div>
+        <span class="blog-card-link__meta">
+            <strong>@authorName</strong>
+            <span class="dot">·</span>
+            @ViewHelpers.RelativeTime(Model.CreatedAt)
+        </span>
+
+        @if (showStatusPill)
+        {
+            if (Model.Status == "DRAFT")
+            {
+                <span class="blog-card-link__pill draft">Draft</span>
+            }
+            else if (Model.Status == "PRIVATE")
+            {
+                <span class="blog-card-link__pill private">Private</span>
+            }
+            else if (Model.Status == "PUBLISHED")
+            {
+                <span class="blog-card-link__pill published">Published</span>
+            }
+        }
+
+        @if (commentCount > 0)
+        {
+            <span class="blog-card-link__comments" title="@commentCount comment@(commentCount != 1 ? "s" : "")">
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                </svg>
+                @commentCount
+            </span>
+        }
+
+        <span class="blog-card-link__badge p@(Model.Priority)">P@(Model.Priority)</span>
+    </div>
+
+    <div class="blog-card-link__title">@Model.Title</div>
+    <p class="blog-card-link__excerpt">@ViewHelpers.Excerpt(Model.Content, excerptLength)</p>
+</a>

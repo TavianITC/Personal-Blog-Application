@@ -118,159 +118,12 @@
         min-width: 200px;
     }
 
-    /* ── Card grid ── */
+    /* ── Card grid (card visuals come from _Layout's .blog-card-link) ── */
     .posts-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 1.25rem;
     }
-
-    .post-card {
-        position: relative;
-        background: var(--white);
-        border: 1px solid var(--gray-200);
-        border-radius: var(--radius-md);
-        padding: 1.75rem;
-        display: flex;
-        flex-direction: column;
-        text-decoration: none;
-        color: inherit;
-        transition: border-color var(--transition), transform var(--transition);
-    }
-
-        .post-card:hover {
-            border-color: var(--gray-400);
-            transform: translateY(-2px);
-            color: inherit;
-            text-decoration: none;
-        }
-
-    .post-card-header {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        margin-bottom: 1rem;
-    }
-
-    .post-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: var(--gray-200);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.7rem;
-        font-weight: 600;
-        color: var(--gray-600);
-        flex-shrink: 0;
-    }
-
-    .post-meta {
-        font-size: 0.775rem;
-        color: var(--gray-600);
-        flex: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-        .post-meta strong {
-            font-weight: 500;
-            color: var(--black);
-        }
-
-        .post-meta .dot {
-            color: var(--gray-400);
-            margin: 0 0.35rem;
-        }
-
-    .post-badge {
-        font-size: 0.7rem;
-        font-weight: 500;
-        padding: 0.25rem 0.6rem;
-        border-radius: 100px;
-        background: var(--gray-100);
-        color: var(--gray-600);
-        flex-shrink: 0;
-    }
-
-        .post-badge.p5 {
-            background: #0a0a0a;
-            color: #fff;
-        }
-
-        .post-badge.p4 {
-            background: #262626;
-            color: #fff;
-        }
-
-        .post-badge.p3 {
-            background: #e8e8e8;
-            color: #0a0a0a;
-        }
-
-        .post-badge.p2 {
-            background: #f4f4f4;
-            color: #525252;
-        }
-
-        .post-badge.p1 {
-            background: #fafafa;
-            color: #a0a0a0;
-        }
-
-    .comment-count {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        font-size: 0.7rem;
-        font-weight: 500;
-        padding: 0.25rem 0.5rem;
-        border-radius: 100px;
-        background: var(--gray-100);
-        color: var(--gray-600);
-        flex-shrink: 0;
-    }
-
-        .comment-count svg {
-            width: 12px;
-            height: 12px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 1.8;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-    .status-pill {
-        display: inline-flex;
-        align-items: center;
-        font-size: 0.65rem;
-        font-weight: 500;
-        padding: 0.18rem 0.5rem;
-        border-radius: 100px;
-        background: var(--gray-100);
-        color: var(--gray-600);
-        flex-shrink: 0;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-        .status-pill.draft {
-            background: #fff7e6;
-            color: #b54708;
-        }
-
-        .status-pill.private {
-            background: #f0f1ff;
-            color: #3b3f87;
-        }
-
-        .status-pill.published {
-            background: #e6ffed;
-            color: #1a7f37;
-        }
 
     .admin-note {
         display: inline-flex;
@@ -291,27 +144,6 @@
             border-radius: 50%;
             background: #b54708;
         }
-
-    .post-title {
-        font-family: var(--font-display);
-        font-size: 1.3rem;
-        line-height: 1.3;
-        letter-spacing: -0.02em;
-        color: var(--black);
-        margin-bottom: 0.6rem;
-    }
-
-    .post-excerpt {
-        font-size: 0.875rem;
-        color: var(--gray-600);
-        line-height: 1.65;
-        margin: 0;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        flex: 1;
-    }
 
     /* ── Empty state ── */
     .empty-state {
@@ -419,41 +251,12 @@ else
     <div class="posts-grid">
         @foreach (var blog in Model)
         {
-            var authorName = blog.User?.UserName ?? "Unknown";
-            <a class="post-card" asp-action="Detail" asp-route-id="@blog.Id">
-                <div class="post-card-header">
-                    <div class="post-avatar">@ViewHelpers.Initials(authorName)</div>
-                    <span class="post-meta">
-                        <strong>@authorName</strong>
-                        <span class="dot">·</span>
-                        @ViewHelpers.RelativeTime(blog.CreatedAt)
-                    </span>
-                    @if (blog.Status == "DRAFT")
-                    {
-                        <span class="status-pill draft">Draft</span>
-                    }
-                    else if (blog.Status == "PRIVATE")
-                    {
-                        <span class="status-pill private">Private</span>
-                    }
-                    else if (isAdmin && blog.Status == "PUBLISHED")
-                    {
-                        <span class="status-pill published">Published</span>
-                    }
-                    @if (blog.Comments.Count > 0)
-                    {
-                        <span class="comment-count" title="@blog.Comments.Count comment@(blog.Comments.Count != 1 ? "s" : "")">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                            </svg>
-                            @blog.Comments.Count
-                        </span>
-                    }
-                    <span class="post-badge p@(blog.Priority)">P@(blog.Priority)</span>
-                </div>
-                <div class="post-title">@blog.Title</div>
-                <p class="post-excerpt">@ViewHelpers.Excerpt(blog.Content)</p>
-            </a>
+            <partial name="_BlogCard"
+                     model="blog"
+                     view-data='new ViewDataDictionary(ViewData) {
+                         { "ShowStatusPill", isAdmin },
+                         { "Compact", false }
+                     }' />
         }
     </div>
 

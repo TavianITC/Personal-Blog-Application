@@ -230,6 +230,225 @@
                     margin: 0;
                 }
 
+            /* ── Blog card (link variant) ──────────────────────────
+               Used by Posts (Index) and Home feed. Whole card is one <a>.
+               Mine page uses .blog-card (article + hover actions) — different.
+               Add .compact for the smaller Home variant.
+            ───────────────────────────────────────────────────────── */
+            .blog-card-link {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                background: var(--white);
+                border: 1px solid var(--gray-200);
+                border-radius: var(--radius-md);
+                padding: 1.75rem;
+                color: inherit;
+                text-decoration: none;
+                transition: border-color var(--transition), transform var(--transition);
+            }
+
+                .blog-card-link:hover {
+                    border-color: var(--gray-400);
+                    transform: translateY(-2px);
+                    color: inherit;
+                    text-decoration: none;
+                }
+
+                .blog-card-link.compact {
+                    padding: 1.5rem;
+                }
+
+            .blog-card-link__header {
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+                margin-bottom: 1rem;
+            }
+
+            .blog-card-link.compact .blog-card-link__header {
+                gap: 0.5rem;
+                margin-bottom: 0.85rem;
+            }
+
+            .blog-card-link__avatar {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: var(--gray-200);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.7rem;
+                font-weight: 600;
+                color: var(--gray-600);
+                flex-shrink: 0;
+            }
+
+            .blog-card-link.compact .blog-card-link__avatar {
+                width: 30px;
+                height: 30px;
+            }
+
+            .blog-card-link__meta {
+                font-size: 0.775rem;
+                color: var(--gray-600);
+                flex: 1;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+                .blog-card-link__meta strong {
+                    font-weight: 500;
+                    color: var(--black);
+                }
+
+                .blog-card-link__meta .dot {
+                    color: var(--gray-400);
+                    margin: 0 0.35rem;
+                }
+
+            .blog-card-link.compact .blog-card-link__meta {
+                font-size: 0.75rem;
+            }
+
+            .blog-card-link__badge {
+                font-size: 0.7rem;
+                font-weight: 500;
+                padding: 0.25rem 0.6rem;
+                border-radius: 100px;
+                background: var(--gray-100);
+                color: var(--gray-600);
+                flex-shrink: 0;
+            }
+
+                .blog-card-link__badge.p5 {
+                    background: #0a0a0a;
+                    color: #fff;
+                }
+
+                .blog-card-link__badge.p4 {
+                    background: #262626;
+                    color: #fff;
+                }
+
+                .blog-card-link__badge.p3 {
+                    background: #e8e8e8;
+                    color: #0a0a0a;
+                }
+
+                .blog-card-link__badge.p2 {
+                    background: #f4f4f4;
+                    color: #525252;
+                }
+
+                .blog-card-link__badge.p1 {
+                    background: #fafafa;
+                    color: #a0a0a0;
+                }
+
+            .blog-card-link.compact .blog-card-link__badge {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.5rem;
+            }
+
+            .blog-card-link__pill {
+                display: inline-flex;
+                align-items: center;
+                font-size: 0.65rem;
+                font-weight: 500;
+                padding: 0.18rem 0.5rem;
+                border-radius: 100px;
+                flex-shrink: 0;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                background: var(--gray-100);
+                color: var(--gray-600);
+            }
+
+                .blog-card-link__pill.draft {
+                    background: #fff7e6;
+                    color: #b54708;
+                }
+
+                .blog-card-link__pill.private {
+                    background: #f0f1ff;
+                    color: #3b3f87;
+                }
+
+                .blog-card-link__pill.published {
+                    background: #e6ffed;
+                    color: #1a7f37;
+                }
+
+            .blog-card-link__comments {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.25rem;
+                font-size: 0.7rem;
+                font-weight: 500;
+                padding: 0.25rem 0.5rem;
+                border-radius: 100px;
+                background: var(--gray-100);
+                color: var(--gray-600);
+                flex-shrink: 0;
+            }
+
+                .blog-card-link__comments svg {
+                    width: 12px;
+                    height: 12px;
+                    stroke: currentColor;
+                    fill: none;
+                    stroke-width: 1.8;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }
+
+            .blog-card-link.compact .blog-card-link__comments {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.5rem;
+            }
+
+                .blog-card-link.compact .blog-card-link__comments svg {
+                    width: 11px;
+                    height: 11px;
+                }
+
+            .blog-card-link__title {
+                font-family: var(--font-display);
+                font-size: 1.3rem;
+                line-height: 1.3;
+                letter-spacing: -0.02em;
+                color: var(--black);
+                margin-bottom: 0.6rem;
+            }
+
+            .blog-card-link.compact .blog-card-link__title {
+                font-size: 1.05rem;
+                line-height: 1.35;
+                letter-spacing: -0.015em;
+                margin-bottom: 0.45rem;
+            }
+
+            .blog-card-link__excerpt {
+                font-size: 0.875rem;
+                color: var(--gray-600);
+                line-height: 1.65;
+                margin: 0;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                flex: 1;
+            }
+
+            .blog-card-link.compact .blog-card-link__excerpt {
+                font-size: 0.825rem;
+                line-height: 1.6;
+                -webkit-line-clamp: 2;
+            }
+
             /* ── Buttons (shared system) ─────────────────────────────
                Usage: <button class="btn btn-primary">…</button>
                Variants: btn-primary | btn-secondary | btn-ghost | btn-danger
