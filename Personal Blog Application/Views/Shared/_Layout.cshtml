@@ -1,7 +1,6 @@
 ﻿@{
     var avatarUrl = ViewBag.AvatarUrl as string;
     var userName = User.Identity?.Name ?? "U";
-    var initial = userName.Length > 0 ? userName.Substring(0, 1).ToUpper() : "U";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -47,7 +46,7 @@
                             }
                             else
                             {
-                                <div class="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-gray-200 font-medium text-[0.75rem] text-gray-600">@initial</div>
+                                <div class="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-gray-200 font-medium text-[0.75rem] text-gray-600">@ViewHelpers.Initials(userName)</div>
                             }
                         </button>
                         <span class="font-medium text-[0.85rem] text-black">@userName</span>

@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Personal_Blog_Application.Data;
 using Personal_Blog_Application.Models;
 using Personal_Blog_Application.ViewModels;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Processing;
 
 namespace Personal_Blog_Application.Controllers
 {
@@ -16,6 +19,13 @@ namespace Personal_Blog_Application.Controllers
         private readonly IWebHostEnvironment _env;
 
         private const long MaxAvatarBytes = 2 * 1024 * 1024;
+
+        // Output dimensions and JPEG quality. 200×200 @ Q90 lands at ~25–40 KB
+        // for typical photographs — well inside the 50 KB ceiling, and visibly
+        // crisper than Q80. Drop back toward 80 if a harder cap is needed.
+        private const int AvatarPixels = 200;
+        private const int JpegQuality = 90;
+
         private static readonly HashSet<string> AllowedExtensions =
             new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".gif" };
         private static readonly HashSet<string> AllowedContentTypes =
@@ -84,14 +94,34 @@ namespace Personal_Blog_Application.Controllers
             var avatarsDir = Path.Combine(_env.WebRootPath, "avatars");
             Directory.CreateDirectory(avatarsDir);
 
-            // GUID filename keeps user-supplied names out of the filesystem path
-            // (defence against path traversal / collisions).
-            var newName = $"{Guid.NewGuid():N}{ext.ToLowerInvariant()}";
+            // We re-encode as JPEG regardless of input format — gives us a
+            // predictable size cap and avoids the alpha / animation edge cases
+            // of PNG/GIF. GUID filename keeps user-supplied names out of the
+            // filesystem path (defence against traversal / collisions).
+            var newName = $"{Guid.NewGuid():N}.jpg";
             var newPath = Path.Combine(avatarsDir, newName);
 
-            await using (var stream = System.IO.File.Create(newPath))
+            try
             {
-                await file.CopyToAsync(stream);
+                await using var input = file.OpenReadStream();
+                using var image = await Image.LoadAsync(input);
+
+                // ResizeMode.Crop = scale uniformly so the image covers a 200×200
+                // box, then center-crop the longer side. Preserves aspect ratio
+                // (no stretching) and guarantees square output.
+                image.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Size = new Size(AvatarPixels, AvatarPixels),
+                    Mode = ResizeMode.Crop,
+                    Position = AnchorPositionMode.Center
+                }));
+
+                await image.SaveAsJpegAsync(newPath, new JpegEncoder { Quality = JpegQuality });
+            }
+            catch (Exception ex) when (ex is UnknownImageFormatException || ex is InvalidImageContentException)
+            {
+                TempData["Error"] = "That file doesn't look like a valid image.";
+                return RedirectToAction(nameof(Index));
             }
 
             var oldUrl = user.AvatarUrl;
