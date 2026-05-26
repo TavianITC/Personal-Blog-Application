@@ -43,7 +43,7 @@
     </a>
 
     <div class="mb-6 flex items-center gap-[0.6rem] text-[0.85rem] text-gray-600">
-        <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 font-semibold text-[0.75rem] text-gray-600">@ViewHelpers.Initials(authorName)</div>
+        <partial name="_Avatar" model="@(new Personal_Blog_Application.ViewModels.AvatarRenderViewModel { AvatarUrl = blog.User?.AvatarUrl, UserName = authorName, SizeClasses = "h-9 w-9", TextSize = "text-[0.75rem]" })" />
         <span>
             <strong class="font-medium text-black">@authorName</strong>
             <span class="mx-[0.35rem] text-gray-400">·</span>

@@ -8,5 +8,6 @@ namespace Personal_Blog_Application.ViewModels
         public string Role { get; set; } = "USER";
         public bool IsActive { get; set; } = true;
         public int BlogCount { get; set; }
+        public string? AvatarUrl { get; set; }
     }
 }

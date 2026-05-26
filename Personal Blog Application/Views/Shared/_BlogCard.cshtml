@@ -27,9 +27,7 @@
         ? "flex items-center gap-2 mb-[0.85rem]"
         : "flex items-center gap-[0.6rem] mb-4";
 
-    var avatarClass = compact
-        ? "w-[30px] h-[30px] rounded-full bg-gray-200 flex items-center justify-center text-[0.7rem] font-semibold text-gray-600 flex-shrink-0"
-        : "w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[0.7rem] font-semibold text-gray-600 flex-shrink-0";
+    var avatarSize = compact ? "h-[30px] w-[30px]" : "h-8 w-8";
 
     var metaClass = compact
         ? "text-[0.75rem] text-gray-600 flex-1 whitespace-nowrap overflow-hidden text-ellipsis"
@@ -69,7 +67,7 @@
    asp-controller="Blogs" asp-action="Detail"
    asp-route-id="@Model.Id" asp-route-from="@from">
     <div class="@headerClass">
-        <div class="@avatarClass">@ViewHelpers.Initials(authorName)</div>
+        <partial name="_Avatar" model="@(new Personal_Blog_Application.ViewModels.AvatarRenderViewModel { AvatarUrl = Model.User?.AvatarUrl, UserName = authorName, SizeClasses = avatarSize })" />
         <span class="@metaClass">
             <strong class="font-medium text-black">@authorName</strong>
             <span class="mx-[0.35rem] text-gray-400">·</span>

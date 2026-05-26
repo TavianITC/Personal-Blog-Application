@@ -10,7 +10,7 @@
 }
 
 <div class="animate-fade-in-up flex gap-[0.85rem] border-b border-gray-100 py-4 last:border-b-0" data-comment-id="@Model.Id">
-    <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 font-semibold text-[0.7rem] text-gray-600">@ViewHelpers.Initials(authorName)</div>
+    <partial name="_Avatar" model="@(new Personal_Blog_Application.ViewModels.AvatarRenderViewModel { AvatarUrl = Model.User?.AvatarUrl, UserName = authorName, SizeClasses = "h-8 w-8" })" />
     <div class="min-w-0 flex-1">
         <div class="mb-[0.3rem] flex items-center gap-[0.4rem] text-[0.78rem] text-gray-600">
             <strong class="font-medium text-black">@authorName</strong>
