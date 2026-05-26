@@ -14,490 +14,78 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/output.css" asp-append-version="true" />
     <style>
-            *, *::before, *::after {
-                box-sizing: border-box;
-                margin: 0;
-                padding: 0;
-            }
-
-            :root {
-                --black: #0a0a0a;
-                --white: #ffffff;
-                --gray-50: #fafafa;
-                --gray-200: #e8e8e8;
-                --gray-400: #a0a0a0;
-                --gray-600: #525252;
-                --error: #c0392b;
-                --font-display: 'DM Serif Display', Georgia, serif;
-                --font-body: 'DM Sans', system-ui, sans-serif;
-                --radius: 2px;
-                --transition: 0.18s ease;
-            }
-
-            html, body {
-                height: 100%;
-                font-family: var(--font-body);
-                background: var(--gray-50);
-                color: var(--black);
-                -webkit-font-smoothing: antialiased;
-            }
-
-            .page {
-                min-height: 100vh;
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-            }
-
-            /* ── Left panel ── */
-            .panel-left {
-                background: #0f1628;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                padding: 2.5rem 3rem;
-                position: relative;
-                overflow: hidden;
-            }
-
-                .panel-left::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background-image: linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
-                    background-size: 48px 48px;
-                    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
-                    -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
-                }
-
-                .panel-left::after {
-                    content: '';
-                    position: absolute;
-                    top: 40%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    width: 420px;
-                    height: 420px;
-                    background: radial-gradient(circle, rgba(139,92,246,0.22) 0%, rgba(99,102,241,0.12) 40%, transparent 70%);
-                    border-radius: 50%;
-                    pointer-events: none;
-                }
-
-            .brand {
-                font-family: var(--font-display);
-                font-size: 1.25rem;
-                color: var(--white);
-                letter-spacing: -0.02em;
-                text-decoration: none;
-                position: relative;
-                z-index: 10;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-
-            .brand-dot {
-                width: 7px;
-                height: 7px;
-                border-radius: 50%;
-                background: #8b5cf6;
-                box-shadow: 0 0 8px rgba(139,92,246,0.8);
-                animation: pulse-dot 3s ease-in-out infinite;
-            }
-
-            @@keyframes pulse-dot {
-                0%, 100% {
-                    opacity: 1;
-                    transform: scale(1);
-                }
-
-                50% {
-                    opacity: 0.6;
-                    transform: scale(0.8);
-                }
-            }
-
-            .canvas-wrap {
-                position: absolute;
-                inset: 0;
-                z-index: 2;
-                pointer-events: none;
-            }
-
-                .canvas-wrap svg {
-                    width: 100%;
-                    height: 100%;
-                }
-
-            .dash-line {
-                stroke: rgba(139,92,246,0.2);
-                stroke-width: 0.8;
-                fill: none;
-                stroke-dasharray: 4 8;
-                animation: dashflow 10s linear infinite;
-            }
-
-            .dash-line-b {
-                stroke: rgba(99,102,241,0.18);
-                animation-duration: 16s;
-            }
-
-            .dash-line-c {
-                stroke: rgba(59,130,246,0.15);
-                animation-duration: 7s;
-            }
-
-            @@keyframes dashflow {
-                from {
-                    stroke-dashoffset: 0;
-                }
-
-                to {
-                    stroke-dashoffset: -120;
-                }
-            }
-
-            .node-ring {
-                fill: none;
-                stroke-width: 0.8;
-                animation: ring-pulse 4s ease-in-out infinite;
-            }
-
-            .node-core {
-                animation: core-pulse 4s ease-in-out infinite;
-            }
-
-            @@keyframes ring-pulse {
-                0%, 100% {
-                    opacity: 0.4;
-                }
-
-                50% {
-                    opacity: 1;
-                }
-            }
-
-            @@keyframes core-pulse {
-                0%, 100% {
-                    opacity: 0.9;
-                }
-
-                50% {
-                    opacity: 0.4;
-                }
-            }
-
-            /* floating card */
-            .float-card {
-                position: absolute;
-                z-index: 6;
-                background: rgba(255,255,255,0.04);
-                border: 1px solid rgba(255,255,255,0.07);
-                border-radius: 8px;
-                padding: 0.75rem 1rem;
-                backdrop-filter: blur(8px);
-                animation: float-y 7s ease-in-out infinite;
-            }
-
-            @@keyframes float-y {
-                0%, 100% {
-                    transform: translateY(0);
-                }
-
-                50% {
-                    transform: translateY(-8px);
-                }
-            }
-
-            .float-card-a {
-                right: 2.5rem;
-                top: 26%;
-                animation-delay: 1s;
-            }
-
-            .float-card-b {
-                right: 4rem;
-                bottom: 26%;
-                animation-delay: 4s;
-            }
-
-            .fc-label {
-                font-size: 0.6rem;
-                text-transform: uppercase;
-                letter-spacing: 0.1em;
-                color: rgba(255,255,255,0.25);
-                margin-bottom: 0.3rem;
-            }
-
-            .fc-value {
-                font-family: var(--font-display);
-                font-size: 1rem;
-                color: rgba(255,255,255,0.85);
-                letter-spacing: -0.02em;
-            }
-
-            .fc-bar {
-                margin-top: 0.4rem;
-                height: 2px;
-                border-radius: 2px;
-                background: rgba(139,92,246,0.6);
-            }
-
-            /* center content */
-            .panel-center {
-                position: relative;
-                z-index: 5;
-                display: flex;
-                flex-direction: column;
-                gap: 2rem;
-            }
-
-            .panel-tagline {
-                font-family: var(--font-display);
-                font-size: clamp(1.75rem, 3vw, 2.75rem);
-                line-height: 1.15;
-                color: #f1f5f9;
-                letter-spacing: -0.03em;
-            }
-
-                .panel-tagline em {
-                    font-style: italic;
-                    color: rgba(255,255,255,0.35);
-                }
-
-            /* checklist */
-            .checklist {
-                list-style: none;
-                display: flex;
-                flex-direction: column;
-                gap: 0.7rem;
-            }
-
-                .checklist li {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.65rem;
-                    font-size: 0.825rem;
-                    color: rgba(255,255,255,0.45);
-                }
-
-            .check-icon {
-                width: 18px;
-                height: 18px;
-                border: 1px solid rgba(139,92,246,0.4);
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex-shrink: 0;
-                background: rgba(139,92,246,0.08);
-            }
-
-                .check-icon svg {
-                    width: 9px;
-                    height: 9px;
-                    stroke: rgba(139,92,246,0.9);
-                    stroke-width: 2;
-                    fill: none;
-                }
-
-            /* tech badge row */
-            .tech-row {
-                display: flex;
-                gap: 0.5rem;
-                flex-wrap: wrap;
-            }
-
-            .tech-badge {
-                font-size: 0.65rem;
-                font-weight: 500;
-                letter-spacing: 0.06em;
-                text-transform: uppercase;
-                padding: 0.25rem 0.6rem;
-                border: 1px solid rgba(255,255,255,0.08);
-                border-radius: 4px;
-                color: rgba(255,255,255,0.35);
-                background: rgba(255,255,255,0.02);
-            }
-
-            .panel-footer {
-                font-size: 0.725rem;
-                color: rgba(255,255,255,0.18);
-                position: relative;
-                z-index: 10;
-            }
-
-            /* ── Right panel ── */
-            .panel-right {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 3rem 2rem;
-                background: var(--white);
-                overflow-y: auto;
-            }
-
-            .form-box {
-                width: 100%;
-                max-width: 400px;
-            }
-
-            .form-heading {
-                font-family: var(--font-display);
-                font-size: 2rem;
-                letter-spacing: -0.03em;
-                margin-bottom: 0.5rem;
-            }
-
-            .form-subheading {
-                font-size: 0.875rem;
-                color: var(--gray-600);
-                margin-bottom: 2.5rem;
-            }
-
-                .form-subheading a {
-                    color: var(--black);
-                    font-weight: 500;
-                    text-decoration: underline;
-                    text-underline-offset: 2px;
-                }
-
-            .validation-summary {
-                background: #fef2f2;
-                border-left: 3px solid var(--error);
-                padding: 0.75rem 1rem;
-                margin-bottom: 1.5rem;
-                border-radius: 0 var(--radius) var(--radius) 0;
-            }
-
-                .validation-summary ul {
-                    list-style: none;
-                    font-size: 0.825rem;
-                    color: var(--error);
-                    line-height: 1.6;
-                }
-
-            .field {
-                margin-bottom: 1.125rem;
-            }
-
-                .field label {
-                    display: block;
-                    font-size: 0.775rem;
-                    font-weight: 500;
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                    color: var(--gray-600);
-                    margin-bottom: 0.5rem;
-                }
-
-                .field input {
-                    width: 100%;
-                    height: 48px;
-                    padding: 0 1rem;
-                    font-family: var(--font-body);
-                    font-size: 0.9rem;
-                    color: var(--black);
-                    background: var(--gray-50);
-                    border: 1px solid var(--gray-200);
-                    border-radius: var(--radius);
-                    outline: none;
-                    transition: border-color var(--transition), background var(--transition);
-                }
-
-                    .field input:focus {
-                        border-color: var(--black);
-                        background: var(--white);
-                    }
-
-                    .field input::placeholder {
-                        color: var(--gray-400);
-                    }
-
-            .field-error {
-                font-size: 0.775rem;
-                color: var(--error);
-                margin-top: 0.35rem;
-                display: block;
-            }
-
-            .field input.input-error {
-                border-color: var(--error);
-            }
-
-            .strength-bar {
-                display: flex;
-                gap: 4px;
-                margin-top: 0.5rem;
-            }
-
-                .strength-bar span {
-                    height: 3px;
-                    flex: 1;
-                    background: var(--gray-200);
-                    border-radius: 2px;
-                    transition: background 0.2s;
-                }
-
-            .strength-label {
-                font-size: 0.725rem;
-                color: var(--gray-400);
-                margin-top: 0.3rem;
-                min-height: 1em;
-            }
-
-            .btn-submit {
-                width: 100%;
-                height: 50px;
-                background: var(--black);
-                color: var(--white);
-                font-family: var(--font-body);
-                font-size: 0.875rem;
-                font-weight: 500;
-                letter-spacing: 0.04em;
-                border: none;
-                border-radius: var(--radius);
-                cursor: pointer;
-                transition: opacity var(--transition), transform var(--transition);
-            }
-
-                .btn-submit:hover {
-                    opacity: 0.88;
-                }
-
-                .btn-submit:active {
-                    transform: scale(0.99);
-                }
-
-            @@media (max-width: 768px) {
-                .page {
-                    grid-template-columns: 1fr;
-                }
-
-                .panel-left {
-                    display: none;
-                }
-
-                .panel-right {
-                    padding: 2rem 1.5rem;
-                }
-            }
+        /* Decorative animations + pseudo-element backgrounds — same approach as Login */
+
+        .panel-left-decor::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+        }
+        .panel-left-decor::after {
+            content: '';
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, rgba(139,92,246,0.22) 0%, rgba(99,102,241,0.12) 40%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        @@keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: 0.6; transform: scale(0.8); }
+        }
+        @@keyframes dashflow {
+            from { stroke-dashoffset: 0; }
+            to   { stroke-dashoffset: -120; }
+        }
+        @@keyframes ring-pulse {
+            0%, 100% { opacity: 0.4; }
+            50%      { opacity: 1; }
+        }
+        @@keyframes core-pulse {
+            0%, 100% { opacity: 0.9; }
+            50%      { opacity: 0.4; }
+        }
+        @@keyframes float-y {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-8px); }
+        }
+
+        .brand-dot       { animation: pulse-dot 3s ease-in-out infinite; }
+        .dash-line       { stroke: rgba(139,92,246,0.2); stroke-width: 0.8; fill: none; stroke-dasharray: 4 8; animation: dashflow 10s linear infinite; }
+        .dash-line-b     { stroke: rgba(99,102,241,0.18); animation-duration: 16s; }
+        .dash-line-c     { stroke: rgba(59,130,246,0.15); animation-duration: 7s; }
+        .node-ring       { fill: none; stroke-width: 0.8; animation: ring-pulse 4s ease-in-out infinite; }
+        .node-core       { animation: core-pulse 4s ease-in-out infinite; }
+        .float-card-anim { animation: float-y 7s ease-in-out infinite; }
     </style>
 </head>
-<body>
-    <div class="page">
+<body class="h-full bg-gray-50 font-sans text-black antialiased">
+    <div class="grid min-h-screen grid-cols-1 md:grid-cols-2">
 
         <!-- ── Left panel ── -->
-        <div class="panel-left">
+        <div class="panel-left-decor relative hidden flex-col justify-between overflow-hidden bg-[#0f1628] p-10 md:flex lg:p-12">
 
-            <a asp-controller="Home" asp-action="Index" class="brand">
-                <span class="brand-dot"></span>
+            <a asp-controller="Home" asp-action="Index"
+               class="font-display relative z-10 inline-flex items-center gap-2 tracking-tight text-[1.25rem] text-white no-underline">
+                <span class="brand-dot h-[7px] inline-block w-[7px] rounded-full bg-[#8b5cf6] shadow-[0_0_8px_rgba(139,92,246,0.8)]"></span>
                 Tavian Blog
             </a>
 
             <!-- Animated SVG lines -->
-            <div class="canvas-wrap" aria-hidden="true">
-                <svg viewBox="0 0 500 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <div class="z-[2] pointer-events-none absolute inset-0" aria-hidden="true">
+                <svg class="h-full w-full" viewBox="0 0 500 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
                     <path class="dash-line" d="M-20 150 Q140 80 280 160 T540 100" />
                     <path class="dash-line dash-line-b" d="M-20 380 Q160 300 300 360 T540 310" />
                     <path class="dash-line dash-line-c" d="M-20 620 Q110 550 250 590 T540 540" />
@@ -528,78 +116,70 @@
             </div>
 
             <!-- Floating cards -->
-            <div class="float-card float-card-a" aria-hidden="true">
-                <div class="fc-label">New members</div>
-                <div class="fc-value">+12 today</div>
-                <div class="fc-bar" style="width:55%"></div>
+            <div class="float-card-anim z-[6] absolute right-10 top-[26%] rounded-lg border border-white/10 bg-white/5 p-3 px-4 backdrop-blur-sm" style="animation-delay:1s" aria-hidden="true">
+                <div class="tracking-[0.1em] mb-1 uppercase text-[0.6rem] text-white/25">New members</div>
+                <div class="font-display text-base tracking-tight text-white/85">+12 today</div>
+                <div class="h-[2px] mt-[0.4rem] rounded-sm bg-[rgba(139,92,246,0.6)]" style="width:55%"></div>
             </div>
 
-            <div class="float-card float-card-b" aria-hidden="true">
-                <div class="fc-label">Comments</div>
-                <div class="fc-value">340 this week</div>
-                <div class="fc-bar" style="width:74%;background:rgba(59,130,246,0.6)"></div>
+            <div class="float-card-anim z-[6] absolute bottom-[26%] right-16 rounded-lg border border-white/10 bg-white/5 p-3 px-4 backdrop-blur-sm" style="animation-delay:4s" aria-hidden="true">
+                <div class="tracking-[0.1em] mb-1 uppercase text-[0.6rem] text-white/25">Comments</div>
+                <div class="font-display text-base tracking-tight text-white/85">340 this week</div>
+                <div class="h-[2px] mt-[0.4rem] rounded-sm bg-[rgba(59,130,246,0.6)]" style="width:74%"></div>
             </div>
 
             <!-- Center content -->
-            <div class="panel-center">
-                <h1 class="panel-tagline">
+            <div class="z-[5] relative flex flex-col gap-8">
+                <h1 class="font-display leading-[1.15] tracking-[-0.03em] text-[clamp(1.75rem,3vw,2.75rem)] text-[#f1f5f9]">
                     Start writing<br>
-                    <em>your story</em><br>
+                    <em class="italic text-white/35">your story</em><br>
                     today.
                 </h1>
 
-                <ul class="checklist">
-                    <li>
-                        <span class="check-icon">
-                            <svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" /></svg>
-                        </span>
-                        Rich-text editor with full formatting
-                    </li>
-                    <li>
-                        <span class="check-icon">
-                            <svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" /></svg>
-                        </span>
-                        Organise posts by priority level
-                    </li>
-                    <li>
-                        <span class="check-icon">
-                            <svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" /></svg>
-                        </span>
-                        Comment and engage with community
-                    </li>
-                    <li>
-                        <span class="check-icon">
-                            <svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" /></svg>
-                        </span>
-                        Personal profile with avatar upload
-                    </li>
+                <ul class="flex list-none flex-col gap-[0.7rem]">
+                    @foreach (var item in new[] {
+                        "Rich-text editor with full formatting",
+                        "Organise posts by priority level",
+                        "Comment and engage with community",
+                        "Personal profile with avatar upload" })
+                    {
+                        <li class="flex items-center gap-[0.65rem] text-[0.825rem] text-white/45">
+                            <span class="h-[18px] flex w-[18px] flex-shrink-0 items-center justify-center rounded-full border border-[rgba(139,92,246,0.4)] bg-[rgba(139,92,246,0.08)]">
+                                <svg class="h-[9px] w-[9px] fill-none" stroke="rgba(139,92,246,0.9)" stroke-width="2" viewBox="0 0 10 10">
+                                    <polyline points="1.5,5 4,7.5 8.5,2.5" />
+                                </svg>
+                            </span>
+                            @item
+                        </li>
+                    }
                 </ul>
 
-                <div class="tech-row">
-                    <span class="tech-badge">ASP.NET Core</span>
-                    <span class="tech-badge">EF Core 8</span>
-                    <span class="tech-badge">SQL Server</span>
-                    <span class="tech-badge">.NET 8</span>
+                <div class="flex flex-wrap gap-2">
+                    <span class="tracking-[0.06em] rounded-md border border-white/10 bg-white/[0.02] px-[0.6rem] py-1 font-medium uppercase text-[0.65rem] text-white/35">ASP.NET Core</span>
+                    <span class="tracking-[0.06em] rounded-md border border-white/10 bg-white/[0.02] px-[0.6rem] py-1 font-medium uppercase text-[0.65rem] text-white/35">EF Core 8</span>
+                    <span class="tracking-[0.06em] rounded-md border border-white/10 bg-white/[0.02] px-[0.6rem] py-1 font-medium uppercase text-[0.65rem] text-white/35">SQL Server</span>
+                    <span class="tracking-[0.06em] rounded-md border border-white/10 bg-white/[0.02] px-[0.6rem] py-1 font-medium uppercase text-[0.65rem] text-white/35">.NET 8</span>
                 </div>
             </div>
 
-            <p class="panel-footer">© @DateTime.Now.Year Tavian Blog · ITC Group</p>
+            <p class="relative z-10 text-[0.725rem] text-white/20">© @DateTime.Now.Year Tavian Blog · ITC Group</p>
         </div>
 
-        <!-- ── Right panel ── -->
-        <div class="panel-right">
-            <div class="form-box">
+        <!-- ── Right panel (form) ── -->
+        <div class="flex items-center justify-center overflow-y-auto bg-white px-6 py-12 md:p-12">
+            <div class="w-full max-w-[400px]">
 
-                <h2 class="form-heading">Create account</h2>
-                <p class="form-subheading">
+                <h2 class="font-display tracking-[-0.03em] mb-2 text-[2rem]">Create account</h2>
+                <p class="mb-10 text-sm text-gray-600">
                     Already have one?
-                    <a asp-controller="Auth" asp-action="Login">Sign in</a>
+                    <a asp-controller="Auth" asp-action="Login"
+                       class="font-medium text-black underline underline-offset-2">Sign in</a>
                 </p>
 
                 @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
                 {
-                    <div class="validation-summary">
-                        <ul>
+                    <div class="mb-6 rounded-r border-error border-l-[3px] bg-danger-bg px-4 py-3">
+                        <ul class="list-none leading-relaxed text-[0.825rem] text-error">
                             @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
                             {
                                 <li>@error.ErrorMessage</li>
@@ -611,54 +191,57 @@
                 <form asp-action="Register" asp-controller="Auth" method="post" novalidate>
                     @Html.AntiForgeryToken()
 
-                    <div class="field">
-                        <label asp-for="Username">Username</label>
+                    <div class="mb-[1.125rem]">
+                        <label asp-for="Username" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Username</label>
                         <input asp-for="Username" type="text" placeholder="yourname" autocomplete="username"
-                               class="@(ViewData.ModelState["Username"]?.Errors.Count > 0 ? "input-error" : "")" />
-                        <span asp-validation-for="Username" class="field-error"></span>
+                               class="h-12 w-full rounded border bg-gray-50 px-4 font-sans text-[0.9rem] @(ViewData.ModelState["Username"]?.Errors.Count > 0 ? "border-error" : "border-gray-200") text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+                        <span asp-validation-for="Username" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
                     </div>
 
-                    <div class="field">
-                        <label asp-for="Email">Email</label>
+                    <div class="mb-[1.125rem]">
+                        <label asp-for="Email" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Email</label>
                         <input asp-for="Email" type="email" placeholder="you@example.com" autocomplete="email"
-                               class="@(ViewData.ModelState["Email"]?.Errors.Count > 0 ? "input-error" : "")" />
-                        <span asp-validation-for="Email" class="field-error"></span>
+                               class="h-12 w-full rounded border bg-gray-50 px-4 font-sans text-[0.9rem] @(ViewData.ModelState["Email"]?.Errors.Count > 0 ? "border-error" : "border-gray-200") text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+                        <span asp-validation-for="Email" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
                     </div>
 
-                    <div class="field">
-                        <label asp-for="Password">Password</label>
-                        <input asp-for="Password" type="password" id="passwordInput"
-                               placeholder="Min. 6 characters" autocomplete="new-password"
-                               class="@(ViewData.ModelState["Password"]?.Errors.Count > 0 ? "input-error" : "")" />
-                        <div class="strength-bar">
-                            <span id="s1"></span><span id="s2"></span><span id="s3"></span><span id="s4"></span>
+                    <div class="mb-[1.125rem]">
+                        <label asp-for="Password" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Password</label>
+                        <input asp-for="Password" type="password" id="passwordInput" placeholder="Min. 6 characters" autocomplete="new-password"
+                               class="h-12 w-full rounded border bg-gray-50 px-4 font-sans text-[0.9rem] @(ViewData.ModelState["Password"]?.Errors.Count > 0 ? "border-error" : "border-gray-200") text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+                        <div class="mt-2 flex gap-1">
+                            <span id="s1" class="h-[3px] flex-1 rounded-sm bg-gray-200 transition-[background]"></span>
+                            <span id="s2" class="h-[3px] flex-1 rounded-sm bg-gray-200 transition-[background]"></span>
+                            <span id="s3" class="h-[3px] flex-1 rounded-sm bg-gray-200 transition-[background]"></span>
+                            <span id="s4" class="h-[3px] flex-1 rounded-sm bg-gray-200 transition-[background]"></span>
                         </div>
-                        <p class="strength-label" id="strengthLabel"></p>
-                        <span asp-validation-for="Password" class="field-error"></span>
+                        <p id="strengthLabel" class="mt-[0.3rem] min-h-[1em] text-[0.725rem] text-gray-400"></p>
+                        <span asp-validation-for="Password" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
                     </div>
 
-                    <div class="field">
-                        <label asp-for="ConfirmPassword">Confirm Password</label>
-                        <input asp-for="ConfirmPassword" type="password" placeholder="Repeat your password"
-                               autocomplete="new-password"
-                               class="@(ViewData.ModelState["ConfirmPassword"]?.Errors.Count > 0 ? "input-error" : "")" />
-                        <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+                    <div class="mb-[1.125rem]">
+                        <label asp-for="ConfirmPassword" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Confirm Password</label>
+                        <input asp-for="ConfirmPassword" type="password" placeholder="Repeat your password" autocomplete="new-password"
+                               class="h-12 w-full rounded border bg-gray-50 px-4 font-sans text-[0.9rem] @(ViewData.ModelState["ConfirmPassword"]?.Errors.Count > 0 ? "border-error" : "border-gray-200") text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+                        <span asp-validation-for="ConfirmPassword" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
                     </div>
 
-                    <button type="submit" class="btn-submit" style="margin-top:0.5rem">Create account</button>
+                    <button type="submit"
+                            class="h-[50px] tracking-[0.04em] mt-2 w-full cursor-pointer rounded border-0 bg-black font-sans text-sm font-medium text-white transition hover:opacity-90 active:scale-[0.99]">
+                        Create account
+                    </button>
 
-                    <p style="text-align:center;font-size:0.825rem;color:var(--gray-600);margin-top:1.25rem">
+                    <p class="mt-5 text-center text-[0.825rem] text-gray-600">
                         Already have an account?
                         <a asp-controller="Auth" asp-action="Login"
-                           style="color:var(--black);font-weight:500;text-decoration:underline;text-underline-offset:2px">
-                            Sign in
-                        </a>
+                           class="font-medium text-black underline underline-offset-2">Sign in</a>
                     </p>
                 </form>
             </div>
         </div>
 
     </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
@@ -670,21 +253,21 @@
         const labels = ['Weak', 'Fair', 'Good', 'Strong'];
 
         function getStrength(p) {
-        let s = 0;
-        if (p.length >= 6) s++;
-        if (p.length >= 10) s++;
-        if (/[A-Z]/.test(p) && /[0-9]/.test(p)) s++;
-        if (/[^A-Za-z0-9]/.test(p)) s++;
-        return Math.min(s, 4);
+            let s = 0;
+            if (p.length >= 6) s++;
+            if (p.length >= 10) s++;
+            if (/[A-Z]/.test(p) && /[0-9]/.test(p)) s++;
+            if (/[^A-Za-z0-9]/.test(p)) s++;
+            return Math.min(s, 4);
         }
 
         input && input.addEventListener('input', function () {
-        const val = this.value;
-        if (!val) { bars.forEach(b => b.style.background = ''); label.textContent = ''; return; }
-        const s = getStrength(val);
-        bars.forEach((b, i) => { b.style.background = i < s ? colors[s - 1] : '#e8e8e8'; });
-        label.textContent = labels[s - 1] || '';
-        label.style.color = colors[s - 1] || '#a0a0a0';
+            const val = this.value;
+            if (!val) { bars.forEach(b => b.style.background = ''); label.textContent = ''; return; }
+            const s = getStrength(val);
+            bars.forEach((b, i) => { b.style.background = i < s ? colors[s - 1] : '#e8e8e8'; });
+            label.textContent = labels[s - 1] || '';
+            label.style.color = colors[s - 1] || '#a0a0a0';
         });
     </script>
 </body>

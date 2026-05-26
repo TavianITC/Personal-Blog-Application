@@ -1,119 +1,83 @@
-@model Personal_Blog_Application.ViewModels.BlogCreateViewModel
+﻿@model Personal_Blog_Application.ViewModels.BlogCreateViewModel
 
 @{
     ViewData["Title"] = "Edit Post";
     var blogId = (int)ViewBag.BlogId;
 
-    // Forward "from" so back/cancel know where to return
     var from = Context.Request.Query["from"].ToString();
     var backAction = from == "mine" ? "Mine" : "Index";
     var backLabel = from == "mine" ? "Back to my posts" : "Back to posts";
 }
 
-<div style="max-width:760px;margin:0 auto">
+<div class="mx-auto max-w-[760px]">
 
     <!-- Header -->
-    <div style="margin-bottom:2rem">
-        <a asp-action="@backAction" class="btn btn-link" style="margin-bottom:1rem">
+    <div class="mb-8">
+        <a asp-action="@backAction"
+           class="mb-4 inline-block text-[0.825rem] text-gray-600 transition hover:-translate-x-0.5 hover:text-black">
             ← @backLabel
         </a>
-        <h1 style="font-family:var(--font-display);font-size:2rem;
-                   letter-spacing:-0.03em">Edit Post</h1>
+        <h1 class="font-display tracking-[-0.03em] text-[2rem]">Edit Post</h1>
     </div>
 
-    <form asp-action="Edit" asp-route-id="@blogId" method="post">
+    <form asp-action="Edit" asp-route-id="@blogId" asp-route-from="@from" method="post">
         @Html.AntiForgeryToken()
 
         <!-- Title -->
-        <div style="margin-bottom:1.5rem">
-            <label asp-for="Title"
-                   style="display:block;font-size:0.775rem;font-weight:500;
-                          letter-spacing:0.08em;text-transform:uppercase;
-                          color:var(--gray-600);margin-bottom:0.5rem">
-                Title
-            </label>
-            <input asp-for="Title"
-                   placeholder="Enter your post title..."
-                   style="width:100%;height:48px;padding:0 1rem;
-                          font-family:var(--font-body);font-size:0.9rem;
-                          border:1px solid var(--gray-200);border-radius:2px;
-                          outline:none;background:var(--gray-50);
-                          transition:border-color 0.18s"
-                   onfocus="this.style.borderColor='var(--black)';this.style.background='#fff'"
-                   onblur="this.style.borderColor='var(--gray-200)';this.style.background='var(--gray-50)'" />
-            <span asp-validation-for="Title"
-                  style="font-size:0.775rem;color:#c0392b;margin-top:0.35rem;display:block">
-            </span>
+        <div class="mb-6">
+            <label asp-for="Title" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Title</label>
+            <input asp-for="Title" placeholder="Enter your post title..."
+                   class="h-12 w-full rounded border border-gray-200 bg-gray-50 px-4 font-sans text-[0.9rem] outline-none transition focus:border-black focus:bg-white" />
+            <span asp-validation-for="Title" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
         </div>
 
         <!-- Priority + Status row -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+        <div class="mb-6 grid grid-cols-2 gap-4">
             <div>
-                <label asp-for="Priority"
-                       style="display:block;font-size:0.775rem;font-weight:500;
-                              letter-spacing:0.08em;text-transform:uppercase;
-                              color:var(--gray-600);margin-bottom:0.5rem">
-                    Priority
-                </label>
+                <label asp-for="Priority" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Priority</label>
                 <select asp-for="Priority"
-                        style="width:100%;height:48px;padding:0 1rem;
-                               font-family:var(--font-body);font-size:0.875rem;
-                               border:1px solid var(--gray-200);border-radius:2px;
-                               background:var(--gray-50);outline:none;cursor:pointer">
+                        class="h-12 w-full cursor-pointer rounded border border-gray-200 bg-gray-50 px-4 font-sans text-sm outline-none">
                     <option value="1">P1 — Lowest</option>
                     <option value="2">P2 — Low</option>
                     <option value="3">P3 — Medium</option>
                     <option value="4">P4 — High</option>
                     <option value="5">P5 — Highest</option>
                 </select>
-                <span asp-validation-for="Priority"
-                      style="font-size:0.775rem;color:#c0392b;margin-top:0.35rem;display:block">
-                </span>
+                <span asp-validation-for="Priority" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
             </div>
 
             <div>
-                <label asp-for="Status"
-                       style="display:block;font-size:0.775rem;font-weight:500;
-                              letter-spacing:0.08em;text-transform:uppercase;
-                              color:var(--gray-600);margin-bottom:0.5rem">
-                    Visibility
-                </label>
+                <label asp-for="Status" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Visibility</label>
                 <select asp-for="Status"
-                        style="width:100%;height:48px;padding:0 1rem;
-                               font-family:var(--font-body);font-size:0.875rem;
-                               border:1px solid var(--gray-200);border-radius:2px;
-                               background:var(--gray-50);outline:none;cursor:pointer">
+                        class="h-12 w-full cursor-pointer rounded border border-gray-200 bg-gray-50 px-4 font-sans text-sm outline-none">
                     <option value="DRAFT">Draft — only visible to you</option>
                     <option value="PUBLISHED">Published — visible to everyone</option>
                     <option value="PRIVATE">Private — only visible to you</option>
                 </select>
-                <span asp-validation-for="Status"
-                      style="font-size:0.775rem;color:#c0392b;margin-top:0.35rem;display:block">
-                </span>
+                <span asp-validation-for="Status" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
             </div>
         </div>
 
         <!-- Content -->
-        <div style="margin-bottom:2rem">
-            <label asp-for="Content"
-                   style="display:block;font-size:0.775rem;font-weight:500;
-                          letter-spacing:0.08em;text-transform:uppercase;
-                          color:var(--gray-600);margin-bottom:0.5rem">
-                Content
-            </label>
+        <div class="mb-8">
+            <label asp-for="Content" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Content</label>
             <input type="hidden" asp-for="Content" id="Content" />
-            <div id="quill-editor" style="margin-bottom:0.5rem"></div>
-            <span asp-validation-for="Content"
-                  style="font-size:0.775rem;color:#c0392b;margin-top:0.35rem;display:block">
-            </span>
+            <div id="quill-editor" class="mb-2"></div>
+            <span asp-validation-for="Content" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
         </div>
 
         <!-- Actions -->
-        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
-            <button type="submit" class="btn btn-primary btn-lg">Save changes</button>
+        <div class="flex flex-wrap items-center gap-3">
+            <button type="submit"
+                    class="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-black px-6 font-sans text-sm font-medium leading-none text-white transition hover:shadow-btn-primary-hover hover:-translate-y-px hover:opacity-90 active:translate-y-0">
+                Save changes
+            </button>
             <a asp-action="Detail" asp-route-id="@blogId" asp-route-from="@from"
-               class="btn btn-ghost btn-lg">Cancel</a>
-            <button type="button" id="open-delete" class="btn btn-danger btn-lg" style="margin-left:auto">
+               class="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded border border-gray-200 bg-transparent px-6 font-sans text-sm font-medium leading-none text-gray-600 no-underline transition hover:-translate-y-px hover:border-gray-300 hover:bg-gray-100 hover:text-black active:translate-y-0">
+                Cancel
+            </a>
+            <button type="button" id="open-delete"
+                    class="ml-auto inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-error px-6 font-sans text-sm font-medium leading-none text-white transition hover:shadow-btn-danger-hover hover:-translate-y-px hover:opacity-90 active:translate-y-0">
                 Delete post
             </button>
         </div>
@@ -122,22 +86,19 @@
 
 <!-- Delete confirmation modal -->
 <div id="delete-modal"
-     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);
-            z-index:1000;align-items:center;justify-content:center;padding:1rem">
-    <div style="background:#fff;border-radius:6px;max-width:440px;width:100%;
-                padding:2rem;box-shadow:0 25px 60px rgba(0,0,0,0.2)">
-        <h2 style="font-family:var(--font-display);font-size:1.35rem;
-                   letter-spacing:-0.02em;margin-bottom:0.5rem">
-            Delete this post?
-        </h2>
-        <p style="font-size:0.875rem;color:var(--gray-600);margin-bottom:1.5rem;line-height:1.6">
+     class="z-[1000] fixed inset-0 hidden items-center justify-center bg-black/45 p-4">
+    <div class="w-full max-w-[440px] rounded-md bg-white p-8 shadow-[0_25px_60px_rgba(0,0,0,0.2)]">
+        <h2 class="font-display mb-2 tracking-tight text-[1.35rem]">Delete this post?</h2>
+        <p class="mb-6 text-sm leading-relaxed text-gray-600">
             This will permanently delete the post. This action cannot be undone.
         </p>
-        <div style="display:flex;justify-content:flex-end;gap:0.5rem">
-            <button type="button" id="cancel-delete" class="btn btn-ghost btn-sm">Cancel</button>
-            <form asp-action="Delete" asp-route-id="@blogId" method="post" style="margin:0">
+        <div class="flex justify-end gap-2">
+            <button type="button" id="cancel-delete"
+                    class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-gray-200 bg-transparent px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-gray-600 transition hover:border-gray-300 hover:bg-gray-100 hover:text-black">Cancel</button>
+            <form asp-action="Delete" asp-route-id="@blogId" asp-route-from="@from" method="post" class="m-0">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-danger btn-sm">Delete post</button>
+                <button type="submit"
+                        class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-error px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-white transition hover:opacity-90">Delete post</button>
             </form>
         </div>
     </div>
@@ -148,28 +109,25 @@
 
     <style>
         .ql-toolbar {
-            border: 1px solid var(--gray-200) !important;
+            border: 1px solid #e8e8e8 !important;
             border-radius: 2px 2px 0 0 !important;
-            font-family: var(--font-body) !important;
+            font-family: 'DM Sans', system-ui, sans-serif !important;
         }
-
         .ql-container {
-            border: 1px solid var(--gray-200) !important;
+            border: 1px solid #e8e8e8 !important;
             border-top: none !important;
             border-radius: 0 0 2px 2px !important;
-            font-family: var(--font-body) !important;
+            font-family: 'DM Sans', system-ui, sans-serif !important;
             font-size: 15px !important;
         }
-
         .ql-editor {
             min-height: 320px;
             line-height: 1.75;
         }
-
-            .ql-editor.ql-blank::before {
-                color: var(--gray-400) !important;
-                font-style: normal !important;
-            }
+        .ql-editor.ql-blank::before {
+            color: #a0a0a0 !important;
+            font-style: normal !important;
+        }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
@@ -192,7 +150,6 @@
                 }
             });
 
-            // Pre-fill Quill with existing content
             if (hiddenContent.value) {
                 quill.clipboard.dangerouslyPasteHTML(hiddenContent.value);
             }
@@ -210,13 +167,22 @@
             const openBtn = document.getElementById('open-delete');
             const cancelBtn = document.getElementById('cancel-delete');
 
-            openBtn.addEventListener('click', () => modal.style.display = 'flex');
-            cancelBtn.addEventListener('click', () => modal.style.display = 'none');
+            function openModal() {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            openBtn.addEventListener('click', openModal);
+            cancelBtn.addEventListener('click', closeModal);
             modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.style.display = 'none';
+                if (e.target === modal) closeModal();
             });
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') modal.style.display = 'none';
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
             });
         })();
     </script>

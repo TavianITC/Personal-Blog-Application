@@ -14,543 +14,86 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/output.css" asp-append-version="true" />
     <style>
-            *, *::before, *::after {
-                box-sizing: border-box;
-                margin: 0;
-                padding: 0;
-            }
-
-            :root {
-                --black: #0a0a0a;
-                --white: #ffffff;
-                --gray-50: #fafafa;
-                --gray-200: #e8e8e8;
-                --gray-400: #a0a0a0;
-                --gray-600: #525252;
-                --error: #c0392b;
-                --font-display: 'DM Serif Display', Georgia, serif;
-                --font-body: 'DM Sans', system-ui, sans-serif;
-                --radius: 2px;
-                --transition: 0.18s ease;
-            }
-
-            html, body {
-                height: 100%;
-                font-family: var(--font-body);
-                background: var(--gray-50);
-                color: var(--black);
-                -webkit-font-smoothing: antialiased;
-            }
-
-            .page {
-                min-height: 100vh;
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-            }
-
-            /* ── Left panel ── */
-            .panel-left {
-                background: #0f1628;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                padding: 2.5rem 3rem;
-                position: relative;
-                overflow: hidden;
-            }
-
-                /* Grid lines background */
-                .panel-left::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background-image: linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
-                    background-size: 48px 48px;
-                    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
-                    -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
-                }
-
-                /* Glow orb */
-                .panel-left::after {
-                    content: '';
-                    position: absolute;
-                    top: 35%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    width: 420px;
-                    height: 420px;
-                    background: radial-gradient(circle, rgba(99,102,241,0.22) 0%, rgba(59,130,246,0.12) 40%, transparent 70%);
-                    border-radius: 50%;
-                    pointer-events: none;
-                }
-
-            /* ── Brand ── */
-            .brand {
-                font-family: var(--font-display);
-                font-size: 1.25rem;
-                color: var(--white);
-                letter-spacing: -0.02em;
-                text-decoration: none;
-                position: relative;
-                z-index: 10;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-
-            .brand-dot {
-                width: 7px;
-                height: 7px;
-                border-radius: 50%;
-                background: #6366f1;
-                display: inline-block;
-                box-shadow: 0 0 8px rgba(99,102,241,0.8);
-                animation: pulse-dot 3s ease-in-out infinite;
-            }
-
-            @@keyframes pulse-dot {
-                0%, 100% {
-                    opacity: 1;
-                    transform: scale(1);
-                }
-
-                50% {
-                    opacity: 0.6;
-                    transform: scale(0.8);
-                }
-            }
-
-            /* ── Center content ── */
-            .panel-center {
-                position: relative;
-                z-index: 5;
-                display: flex;
-                flex-direction: column;
-                gap: 2.5rem;
-            }
-
-            .panel-tagline {
-                font-family: var(--font-display);
-                font-size: clamp(1.75rem, 3vw, 2.75rem);
-                line-height: 1.15;
-                color: #f1f5f9;
-                letter-spacing: -0.03em;
-            }
-
-                .panel-tagline em {
-                    font-style: italic;
-                    color: rgba(255,255,255,0.35);
-                }
-
-            /* ── Tech stats row ── */
-            .stats-row {
-                display: flex;
-                gap: 1.5rem;
-            }
-
-            .stat-item {
-                display: flex;
-                flex-direction: column;
-                gap: 0.2rem;
-            }
-
-            .stat-value {
-                font-family: var(--font-display);
-                font-size: 1.4rem;
-                color: var(--white);
-                letter-spacing: -0.03em;
-            }
-
-            .stat-label {
-                font-size: 0.7rem;
-                color: rgba(255,255,255,0.3);
-                letter-spacing: 0.08em;
-                text-transform: uppercase;
-            }
-
-            .stat-divider {
-                width: 1px;
-                background: rgba(255,255,255,0.08);
-                align-self: stretch;
-            }
-
-            /* ── Feature pills ── */
-            .feature-pills {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
-
-            .pill {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-                padding: 0.35rem 0.75rem;
-                border: 1px solid rgba(255,255,255,0.08);
-                border-radius: 100px;
-                font-size: 0.72rem;
-                color: rgba(255,255,255,0.5);
-                background: rgba(255,255,255,0.03);
-                letter-spacing: 0.02em;
-            }
-
-            .pill-dot {
-                width: 4px;
-                height: 4px;
-                border-radius: 50%;
-                background: #6366f1;
-                opacity: 0.8;
-            }
-
-            /* ── SVG canvas ── */
-            .canvas-wrap {
-                position: absolute;
-                inset: 0;
-                z-index: 2;
-                pointer-events: none;
-            }
-
-                .canvas-wrap svg {
-                    width: 100%;
-                    height: 100%;
-                }
-
-            /* animated dash lines */
-            .dash-line {
-                stroke: rgba(99,102,241,0.25);
-                stroke-width: 0.8;
-                fill: none;
-                stroke-dasharray: 4 8;
-                animation: dashflow 8s linear infinite;
-            }
-
-            .dash-line-slow {
-                animation-duration: 14s;
-                stroke: rgba(59,130,246,0.18);
-            }
-
-            .dash-line-fast {
-                animation-duration: 5s;
-                stroke: rgba(139,92,246,0.2);
-            }
-
-            @@keyframes dashflow {
-                from {
-                    stroke-dashoffset: 0;
-                }
-
-                to {
-                    stroke-dashoffset: -120;
-                }
-            }
-
-            /* node circles */
-            .node-ring {
-                fill: none;
-                stroke-width: 0.8;
-                animation: ring-pulse 4s ease-in-out infinite;
-            }
-
-            @@keyframes ring-pulse {
-                0%, 100% {
-                    opacity: 0.5;
-                    r: 5;
-                }
-
-                50% {
-                    opacity: 1;
-                    r: 7;
-                }
-            }
-
-            .node-core {
-                animation: core-pulse 4s ease-in-out infinite;
-            }
-
-            @@keyframes core-pulse {
-                0%, 100% {
-                    opacity: 0.9;
-                }
-
-                50% {
-                    opacity: 0.5;
-                }
-            }
-
-            /* floating card */
-            .float-card {
-                position: absolute;
-                z-index: 6;
-                background: rgba(255,255,255,0.04);
-                border: 1px solid rgba(255,255,255,0.08);
-                border-radius: 8px;
-                padding: 0.75rem 1rem;
-                backdrop-filter: blur(8px);
-                animation: float-y 7s ease-in-out infinite;
-            }
-
-            @@keyframes float-y {
-                0%, 100% {
-                    transform: translateY(0);
-                }
-
-                50% {
-                    transform: translateY(-8px);
-                }
-            }
-
-            .float-card-a {
-                right: 2.5rem;
-                top: 28%;
-                animation-delay: 0s;
-            }
-
-            .float-card-b {
-                right: 3.5rem;
-                bottom: 28%;
-                animation-delay: 3.5s;
-            }
-
-            .fc-label {
-                font-size: 0.6rem;
-                text-transform: uppercase;
-                letter-spacing: 0.1em;
-                color: rgba(255,255,255,0.25);
-                margin-bottom: 0.3rem;
-            }
-
-            .fc-value {
-                font-family: var(--font-display);
-                font-size: 1rem;
-                color: rgba(255,255,255,0.85);
-                letter-spacing: -0.02em;
-            }
-
-            .fc-bar {
-                margin-top: 0.4rem;
-                height: 2px;
-                border-radius: 2px;
-                background: rgba(99,102,241,0.6);
-            }
-
-            /* ── Footer ── */
-            .panel-footer {
-                font-size: 0.725rem;
-                color: rgba(255,255,255,0.18);
-                position: relative;
-                z-index: 10;
-            }
-
-            /* ── Right panel ── */
-            .panel-right {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 3rem 2rem;
-                background: var(--white);
-            }
-
-            .form-box {
-                width: 100%;
-                max-width: 400px;
-            }
-
-            .form-heading {
-                font-family: var(--font-display);
-                font-size: 2rem;
-                letter-spacing: -0.03em;
-                margin-bottom: 0.5rem;
-            }
-
-            .form-subheading {
-                font-size: 0.875rem;
-                color: var(--gray-600);
-                margin-bottom: 2.5rem;
-            }
-
-                .form-subheading a {
-                    color: var(--black);
-                    font-weight: 500;
-                    text-decoration: underline;
-                    text-underline-offset: 2px;
-                }
-
-            .validation-summary {
-                background: #fef2f2;
-                border-left: 3px solid var(--error);
-                padding: 0.75rem 1rem;
-                margin-bottom: 1.5rem;
-                border-radius: 0 var(--radius) var(--radius) 0;
-            }
-
-                .validation-summary ul {
-                    list-style: none;
-                    font-size: 0.825rem;
-                    color: var(--error);
-                    line-height: 1.6;
-                }
-
-            .field {
-                margin-bottom: 1.25rem;
-            }
-
-                .field label {
-                    display: block;
-                    font-size: 0.775rem;
-                    font-weight: 500;
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                    color: var(--gray-600);
-                    margin-bottom: 0.5rem;
-                }
-
-                .field input {
-                    width: 100%;
-                    height: 48px;
-                    padding: 0 1rem;
-                    font-family: var(--font-body);
-                    font-size: 0.9rem;
-                    color: var(--black);
-                    background: var(--gray-50);
-                    border: 1px solid var(--gray-200);
-                    border-radius: var(--radius);
-                    outline: none;
-                    transition: border-color var(--transition), background var(--transition);
-                }
-
-                    .field input:focus {
-                        border-color: var(--black);
-                        background: var(--white);
-                    }
-
-                    .field input::placeholder {
-                        color: var(--gray-400);
-                    }
-
-            .field-error {
-                font-size: 0.775rem;
-                color: var(--error);
-                margin-top: 0.35rem;
-            }
-
-            .field input.input-error {
-                border-color: var(--error);
-            }
-
-            .row-remember {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: 1.75rem;
-            }
-
-            .checkbox-label {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                font-size: 0.85rem;
-                color: var(--gray-600);
-                cursor: pointer;
-                user-select: none;
-            }
-
-                .checkbox-label input[type="checkbox"] {
-                    width: 16px;
-                    height: 16px;
-                    accent-color: var(--black);
-                    cursor: pointer;
-                }
-
-            .forgot-link {
-                font-size: 0.825rem;
-                color: var(--gray-600);
-                text-decoration: underline;
-                text-underline-offset: 2px;
-            }
-
-                .forgot-link:hover {
-                    color: var(--black);
-                }
-
-            .btn-submit {
-                width: 100%;
-                height: 50px;
-                background: var(--black);
-                color: var(--white);
-                font-family: var(--font-body);
-                font-size: 0.875rem;
-                font-weight: 500;
-                letter-spacing: 0.04em;
-                border: none;
-                border-radius: var(--radius);
-                cursor: pointer;
-                transition: opacity var(--transition), transform var(--transition);
-            }
-
-                .btn-submit:hover {
-                    opacity: 0.88;
-                }
-
-                .btn-submit:active {
-                    transform: scale(0.99);
-                }
-
-            .divider {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                margin: 1.5rem 0;
-                color: var(--gray-400);
-                font-size: 0.775rem;
-                letter-spacing: 0.06em;
-            }
-
-                .divider::before, .divider::after {
-                    content: '';
-                    flex: 1;
-                    height: 1px;
-                    background: var(--gray-200);
-                }
-
-            @@media (max-width: 768px) {
-                .page {
-                    grid-template-columns: 1fr;
-                }
-
-                .panel-left {
-                    display: none;
-                }
-
-                .panel-right {
-                    padding: 2rem 1.5rem;
-                }
-            }
+        /* Decorative SVG animations + pseudo-element backgrounds (kept as raw CSS
+           because pure utility expressions for gradient + mask + keyframes get
+           unreadable). All semantic/layout styling lives in utility classes. */
+
+        .panel-left-decor::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+        }
+        .panel-left-decor::after {
+            content: '';
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, rgba(99,102,241,0.22) 0%, rgba(59,130,246,0.12) 40%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        @@keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: 0.6; transform: scale(0.8); }
+        }
+        @@keyframes dashflow {
+            from { stroke-dashoffset: 0; }
+            to   { stroke-dashoffset: -120; }
+        }
+        @@keyframes ring-pulse {
+            0%, 100% { opacity: 0.5; r: 5; }
+            50%      { opacity: 1; r: 7; }
+        }
+        @@keyframes core-pulse {
+            0%, 100% { opacity: 0.9; }
+            50%      { opacity: 0.5; }
+        }
+        @@keyframes float-y {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-8px); }
+        }
+
+        .brand-dot       { animation: pulse-dot 3s ease-in-out infinite; }
+        .dash-line       { stroke: rgba(99,102,241,0.25); stroke-width: 0.8; fill: none; stroke-dasharray: 4 8; animation: dashflow 8s linear infinite; }
+        .dash-line-slow  { animation-duration: 14s; stroke: rgba(59,130,246,0.18); }
+        .dash-line-fast  { animation-duration: 5s; stroke: rgba(139,92,246,0.2); }
+        .node-ring       { fill: none; stroke-width: 0.8; animation: ring-pulse 4s ease-in-out infinite; }
+        .node-core       { animation: core-pulse 4s ease-in-out infinite; }
+        .float-card-anim { animation: float-y 7s ease-in-out infinite; }
     </style>
 </head>
-<body>
-    <div class="page">
+<body class="h-full bg-gray-50 font-sans text-black antialiased">
+    <div class="grid min-h-screen grid-cols-1 md:grid-cols-2">
 
         <!-- ── Left panel ── -->
-        <div class="panel-left">
+        <div class="panel-left-decor relative hidden flex-col justify-between overflow-hidden bg-[#0f1628] p-10 md:flex lg:p-12">
 
             <!-- Brand -->
-            <a asp-controller="Home" asp-action="Index" class="brand">
-                <span class="brand-dot"></span>
+            <a asp-controller="Home" asp-action="Index"
+               class="font-display relative z-10 inline-flex items-center gap-2 tracking-tight text-[1.25rem] text-white no-underline">
+                <span class="brand-dot h-[7px] inline-block w-[7px] rounded-full bg-[#6366f1] shadow-[0_0_8px_rgba(99,102,241,0.8)]"></span>
                 Tavian Blog
             </a>
 
             <!-- SVG animated background lines -->
-            <div class="canvas-wrap" aria-hidden="true">
-                <svg viewBox="0 0 500 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-                    <!-- diagonal dash lines -->
+            <div class="z-[2] pointer-events-none absolute inset-0" aria-hidden="true">
+                <svg class="h-full w-full" viewBox="0 0 500 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
                     <path class="dash-line" d="M-20 200 Q120 100 260 180 T520 120" />
                     <path class="dash-line dash-line-slow" d="M-20 400 Q150 320 300 380 T540 340" />
                     <path class="dash-line dash-line-fast" d="M-20 600 Q100 520 240 560 T520 500" />
                     <path class="dash-line" d="M60 -10 Q80 200 120 350 T180 810" stroke-dasharray="3 10" />
                     <path class="dash-line dash-line-slow" d="M300 -10 Q320 150 340 320 T400 810" stroke-dasharray="3 10" />
-
-                    <!-- network nodes -->
                     <g>
                         <circle class="node-ring" cx="130" cy="180" r="6" stroke="rgba(99,102,241,0.4)" />
                         <circle class="node-core" cx="130" cy="180" r="2.5" fill="#6366f1" />
@@ -567,8 +110,6 @@
                         <circle class="node-ring" cx="240" cy="620" r="6" stroke="rgba(99,102,241,0.35)" style="animation-delay:0.5s" />
                         <circle class="node-core" cx="240" cy="620" r="2.5" fill="#6366f1" style="animation-delay:0.5s" />
                     </g>
-
-                    <!-- connecting thin lines between nodes -->
                     <line x1="130" y1="180" x2="310" y2="340" stroke="rgba(99,102,241,0.12)" stroke-width="0.7" />
                     <line x1="310" y1="340" x2="80" y2="500" stroke="rgba(59,130,246,0.1)" stroke-width="0.7" />
                     <line x1="80" y1="500" x2="240" y2="620" stroke="rgba(139,92,246,0.12)" stroke-width="0.7" />
@@ -576,78 +117,87 @@
             </div>
 
             <!-- Floating metric cards -->
-            <div class="float-card float-card-a" aria-hidden="true">
-                <div class="fc-label">Posts today</div>
-                <div class="fc-value">24</div>
-                <div class="fc-bar" style="width:68%"></div>
+            <div class="float-card-anim z-[6] absolute right-10 top-[28%] rounded-lg border border-white/10 bg-white/5 p-3 px-4 backdrop-blur-sm" aria-hidden="true">
+                <div class="tracking-[0.1em] mb-1 uppercase text-[0.6rem] text-white/25">Posts today</div>
+                <div class="font-display text-base tracking-tight text-white/85">24</div>
+                <div class="h-[2px] mt-[0.4rem] rounded-sm bg-[rgba(99,102,241,0.6)]" style="width:68%"></div>
             </div>
 
-            <div class="float-card float-card-b" aria-hidden="true">
-                <div class="fc-label">Active writers</div>
-                <div class="fc-value">138</div>
-                <div class="fc-bar" style="width:82%;background:rgba(59,130,246,0.6)"></div>
+            <div class="float-card-anim z-[6] absolute bottom-[28%] right-14 rounded-lg border border-white/10 bg-white/5 p-3 px-4 backdrop-blur-sm" style="animation-delay:3.5s" aria-hidden="true">
+                <div class="tracking-[0.1em] mb-1 uppercase text-[0.6rem] text-white/25">Active writers</div>
+                <div class="font-display text-base tracking-tight text-white/85">138</div>
+                <div class="h-[2px] mt-[0.4rem] rounded-sm bg-[rgba(59,130,246,0.6)]" style="width:82%"></div>
             </div>
 
             <!-- Center content -->
-            <div class="panel-center">
-                <h1 class="panel-tagline">
+            <div class="z-[5] relative flex flex-col gap-10">
+                <h1 class="font-display leading-[1.15] tracking-[-0.03em] text-[clamp(1.75rem,3vw,2.75rem)] text-[#f1f5f9]">
                     Write your<br>
-                    <em>thoughts,</em><br>
+                    <em class="italic text-white/35">thoughts,</em><br>
                     share your voice.
                 </h1>
 
                 <!-- Stats -->
-                <div class="stats-row">
-                    <div class="stat-item">
-                        <span class="stat-value">2k+</span>
-                        <span class="stat-label">Posts</span>
+                <div class="flex gap-6">
+                    <div class="flex flex-col gap-[0.2rem]">
+                        <span class="font-display tracking-[-0.03em] text-[1.4rem] text-white">2k+</span>
+                        <span class="tracking-[0.08em] uppercase text-[0.7rem] text-white/30">Posts</span>
                     </div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-item">
-                        <span class="stat-value">500+</span>
-                        <span class="stat-label">Writers</span>
+                    <div class="w-px self-stretch bg-white/10"></div>
+                    <div class="flex flex-col gap-[0.2rem]">
+                        <span class="font-display tracking-[-0.03em] text-[1.4rem] text-white">500+</span>
+                        <span class="tracking-[0.08em] uppercase text-[0.7rem] text-white/30">Writers</span>
                     </div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-item">
-                        <span class="stat-value">98%</span>
-                        <span class="stat-label">Uptime</span>
+                    <div class="w-px self-stretch bg-white/10"></div>
+                    <div class="flex flex-col gap-[0.2rem]">
+                        <span class="font-display tracking-[-0.03em] text-[1.4rem] text-white">98%</span>
+                        <span class="tracking-[0.08em] uppercase text-[0.7rem] text-white/30">Uptime</span>
                     </div>
                 </div>
 
                 <!-- Feature pills -->
-                <div class="feature-pills">
-                    <span class="pill"><span class="pill-dot"></span>Rich-text editor</span>
-                    <span class="pill"><span class="pill-dot"></span>Priority system</span>
-                    <span class="pill"><span class="pill-dot"></span>Role-based access</span>
-                    <span class="pill"><span class="pill-dot"></span>Search & filter</span>
+                <div class="flex flex-wrap gap-2">
+                    <span class="inline-flex items-center gap-[0.4rem] rounded-full border border-white/10 bg-white/[0.03] px-3 py-[0.35rem] text-[0.72rem] text-white/50">
+                        <span class="h-1 w-1 rounded-full bg-[#6366f1] opacity-80"></span>Rich-text editor
+                    </span>
+                    <span class="inline-flex items-center gap-[0.4rem] rounded-full border border-white/10 bg-white/[0.03] px-3 py-[0.35rem] text-[0.72rem] text-white/50">
+                        <span class="h-1 w-1 rounded-full bg-[#6366f1] opacity-80"></span>Priority system
+                    </span>
+                    <span class="inline-flex items-center gap-[0.4rem] rounded-full border border-white/10 bg-white/[0.03] px-3 py-[0.35rem] text-[0.72rem] text-white/50">
+                        <span class="h-1 w-1 rounded-full bg-[#6366f1] opacity-80"></span>Role-based access
+                    </span>
+                    <span class="inline-flex items-center gap-[0.4rem] rounded-full border border-white/10 bg-white/[0.03] px-3 py-[0.35rem] text-[0.72rem] text-white/50">
+                        <span class="h-1 w-1 rounded-full bg-[#6366f1] opacity-80"></span>Search &amp; filter
+                    </span>
                 </div>
             </div>
 
-            <p class="panel-footer">© @DateTime.Now.Year Tavian Blog · ITC Group</p>
+            <p class="relative z-10 text-[0.725rem] text-white/20">© @DateTime.Now.Year Tavian Blog · ITC Group</p>
         </div>
 
-        <!-- ── Right panel ── -->
-        <div class="panel-right">
-            <div class="form-box">
+        <!-- ── Right panel (form) ── -->
+        <div class="flex items-center justify-center bg-white px-6 py-12 md:p-12">
+            <div class="w-full max-w-[400px]">
 
-                <h2 class="form-heading">Welcome back</h2>
+                <h2 class="font-display tracking-[-0.03em] mb-2 text-[2rem]">Welcome back</h2>
 
                 @if (TempData["SuccessMessage"] != null)
                 {
-                    <div style="background:#f0fdf4;border-left:3px solid #16a34a;padding:0.75rem 1rem;margin-bottom:1rem;border-radius:0 2px 2px 0;font-size:0.85rem;color:#166534;">
+                    <div class="mb-4 rounded-r border-[#16a34a] border-l-[3px] bg-[#f0fdf4] px-4 py-3 text-[0.85rem] text-[#166534]">
                         @TempData["SuccessMessage"]
                     </div>
                 }
 
-                <p class="form-subheading">
+                <p class="mb-10 text-sm text-gray-600">
                     Don't have an account?
-                    <a asp-controller="Auth" asp-action="Register">Create one</a>
+                    <a asp-controller="Auth" asp-action="Register"
+                       class="font-medium text-black underline underline-offset-2">Create one</a>
                 </p>
 
                 @if (!ViewData.ModelState.IsValid)
                 {
-                    <div class="validation-summary">
-                        <ul>
+                    <div class="mb-6 rounded-r border-error border-l-[3px] bg-danger-bg px-4 py-3">
+                        <ul class="list-none leading-relaxed text-[0.825rem] text-error">
                             @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
                             {
                                 <li>@error.ErrorMessage</li>
@@ -659,44 +209,48 @@
                 <form asp-action="Login" asp-controller="Auth" method="post" novalidate>
                     @Html.AntiForgeryToken()
 
-                    <div class="field">
-                        <label asp-for="Email">Email</label>
+                    <div class="mb-5">
+                        <label asp-for="Email" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Email</label>
                         <input asp-for="Email" type="email" placeholder="you@example.com"
-                               class="@(ViewData.ModelState["Email"]?.Errors.Count > 0 ? "input-error" : "")" />
-                        <span asp-validation-for="Email" class="field-error"></span>
+                               class="h-12 w-full rounded border bg-gray-50 px-4 font-sans text-[0.9rem] @(ViewData.ModelState["Email"]?.Errors.Count > 0 ? "border-error" : "border-gray-200") text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+                        <span asp-validation-for="Email" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
                     </div>
 
-                    <div class="field">
-                        <label asp-for="Password">Password</label>
+                    <div class="mb-5">
+                        <label asp-for="Password" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Password</label>
                         <input asp-for="Password" type="password" placeholder="••••••••"
-                               class="@(ViewData.ModelState["Password"]?.Errors.Count > 0 ? "input-error" : "")" />
-                        <span asp-validation-for="Password" class="field-error"></span>
+                               class="h-12 w-full rounded border bg-gray-50 px-4 font-sans text-[0.9rem] @(ViewData.ModelState["Password"]?.Errors.Count > 0 ? "border-error" : "border-gray-200") text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+                        <span asp-validation-for="Password" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
                     </div>
 
-                    <div class="row-remember">
-                        <label class="checkbox-label">
-                            <input asp-for="RememberMe" type="checkbox" />
+                    <div class="mb-7 flex items-center justify-between">
+                        <label class="flex cursor-pointer select-none items-center gap-2 text-[0.85rem] text-gray-600">
+                            <input asp-for="RememberMe" type="checkbox" class="h-4 w-4 cursor-pointer accent-black" />
                             Remember me
                         </label>
-                        <a href="#" class="forgot-link">Forgot password?</a>
+                        <a href="#" class="text-[0.825rem] text-gray-600 underline underline-offset-2 hover:text-black">Forgot password?</a>
                     </div>
 
-                    <button type="submit" class="btn-submit">Sign in</button>
+                    <button type="submit"
+                            class="h-[50px] tracking-[0.04em] w-full cursor-pointer rounded border-0 bg-black font-sans text-sm font-medium text-white transition hover:opacity-90 active:scale-[0.99]">
+                        Sign in
+                    </button>
 
-                    <div class="divider">or</div>
+                    <div class="tracking-[0.06em] my-6 flex items-center gap-4 text-[0.775rem] text-gray-400
+                                before:content-[''] before:h-px before:flex-1 before:bg-gray-200
+                                after:content-[''] after:h-px after:flex-1 after:bg-gray-200">or</div>
 
-                    <p style="text-align:center;font-size:0.85rem;color:var(--gray-600)">
+                    <p class="text-center text-[0.85rem] text-gray-600">
                         New here?
                         <a asp-controller="Auth" asp-action="Register"
-                           style="color:var(--black);font-weight:500;text-decoration:underline;text-underline-offset:2px">
-                            Create an account
-                        </a>
+                           class="font-medium text-black underline underline-offset-2">Create an account</a>
                     </p>
                 </form>
             </div>
         </div>
 
     </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>

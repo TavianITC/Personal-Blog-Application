@@ -1,270 +1,117 @@
-@model Personal_Blog_Application.Models.Blog
+﻿@model Personal_Blog_Application.ViewModels.BlogDetailViewModel
 
 @{
-    ViewData["Title"] = Model.Title;
+    var blog = Model.Blog;
+    ViewData["Title"] = blog.Title;
     var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-    var canEdit = User.IsInRole("ADMIN") || Model.CreatedBy == userId;
+    var canEdit = User.IsInRole("ADMIN") || blog.CreatedBy == userId;
 
-    // Where did the user come from? "mine" → back to My Posts; otherwise Posts
     var from = Context.Request.Query["from"].ToString();
     var backAction = from == "mine" ? "Mine" : "Index";
     var backLabel = from == "mine" ? "Back to my posts" : "Back to posts";
 
-    string Initials(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return "?";
-        var parts = name.Split(new[] { ' ', '.', '@', '_', '-' },
-            System.StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 1)
-            return parts[0].Substring(0, System.Math.Min(2, parts[0].Length)).ToUpper();
-        return (parts[0][0].ToString() + parts[^1][0].ToString()).ToUpper();
-    }
+    var authorName = blog.User?.UserName ?? "Unknown";
 
-    string RelativeTime(System.DateTime utc)
+    string PriorityBadgeColors(int p) => p switch
     {
-        var diff = System.DateTime.UtcNow - utc;
-        if (diff.TotalMinutes < 1) return "just now";
-        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
-        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
-        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
-        return utc.ToLocalTime().ToString("MMM dd, yyyy");
-    }
-
-    var authorName = Model.User?.UserName ?? "Unknown";
+        5 => "bg-black text-white",
+        4 => "bg-gray-800 text-white",
+        _ => "bg-gray-100 text-gray-600"
+    };
 }
 
 <style>
-    .detail-wrap {
-        max-width: 760px;
-        margin: 0 auto;
-    }
-
-    .detail-back {
-        margin-bottom: 1.5rem;
-    }
-
-    .detail-meta {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        margin-bottom: 1.5rem;
-        font-size: 0.85rem;
-        color: var(--gray-600);
-    }
-
-    .detail-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: var(--gray-200);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--gray-600);
-        flex-shrink: 0;
-    }
-
-    .detail-author strong {
-        font-weight: 500;
-        color: var(--black);
-    }
-
-    .detail-author .dot {
-        color: var(--gray-400);
-        margin: 0 0.35rem;
-    }
-
-    .detail-title {
-        font-family: var(--font-display);
-        font-size: clamp(2rem, 4vw, 3rem);
-        line-height: 1.15;
-        letter-spacing: -0.03em;
-        margin-bottom: 1.5rem;
-        color: var(--black);
-    }
-
-    .detail-badges {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 2rem;
-        flex-wrap: wrap;
-    }
-
-    .detail-badge {
-        font-size: 0.72rem;
-        font-weight: 500;
-        padding: 0.3rem 0.7rem;
-        border-radius: 100px;
-        background: var(--gray-100);
-        color: var(--gray-600);
-    }
-
-        .detail-badge.priority-5 {
-            background: #0a0a0a;
-            color: #fff;
-        }
-
-        .detail-badge.priority-4 {
-            background: #262626;
-            color: #fff;
-        }
-
-        .detail-badge.status-draft {
-            background: #fff7e6;
-            color: #b54708;
-        }
-
-        .detail-badge.status-private {
-            background: #f0f1ff;
-            color: #3b3f87;
-        }
-
-    .detail-content {
-        font-size: 1.05rem;
-        line-height: 1.85;
-        color: var(--gray-800);
-        margin-bottom: 3rem;
-    }
-
-        .detail-content h2 {
-            font-family: var(--font-display);
-            font-size: 1.75rem;
-            letter-spacing: -0.02em;
-            margin: 2rem 0 1rem;
-        }
-
-        .detail-content h3 {
-            font-family: var(--font-display);
-            font-size: 1.35rem;
-            letter-spacing: -0.02em;
-            margin: 1.5rem 0 0.75rem;
-        }
-
-        .detail-content p {
-            margin-bottom: 1rem;
-        }
-
-        .detail-content ul, .detail-content ol {
-            margin: 0 0 1rem 1.5rem;
-        }
-
-            .detail-content ul li, .detail-content ol li {
-                margin-bottom: 0.35rem;
-            }
-
-        .detail-content a {
-            color: var(--black);
-            text-decoration: underline;
-            text-underline-offset: 2px;
-        }
-
-        .detail-content img {
-            max-width: 100%;
-            height: auto;
-            border-radius: var(--radius-md);
-            margin: 1rem 0;
-        }
-
-        .detail-content blockquote {
-            border-left: 3px solid var(--gray-300);
-            padding-left: 1.25rem;
-            margin: 1.5rem 0;
-            color: var(--gray-600);
-            font-style: italic;
-        }
-
-    .detail-footer {
-        border-top: 1px solid var(--gray-200);
-        padding-top: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-
-    .detail-footer-info {
-        font-size: 0.8rem;
-        color: var(--gray-400);
-        margin-right: auto;
-    }
+    /* Rendered Quill HTML (h2/h3/p/ul/ol/a/img/blockquote) — Tailwind base layer
+       strips default heading + list styles, so we re-apply them within
+       .post-content only, matching the original design. */
+    .post-content { font-size: 1.05rem; line-height: 1.85; color: #262626; margin-bottom: 3rem; }
+    .post-content h2 { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.75rem; letter-spacing: -0.02em; margin: 2rem 0 1rem; }
+    .post-content h3 { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.35rem; letter-spacing: -0.02em; margin: 1.5rem 0 0.75rem; }
+    .post-content p  { margin-bottom: 1rem; }
+    .post-content ul, .post-content ol { margin: 0 0 1rem 1.5rem; list-style: revert; }
+    .post-content ul li, .post-content ol li { margin-bottom: 0.35rem; }
+    .post-content a  { color: #0a0a0a; text-decoration: underline; text-underline-offset: 2px; }
+    .post-content img { max-width: 100%; height: auto; border-radius: 4px; margin: 1rem 0; }
+    .post-content blockquote { border-left: 3px solid #d4d4d4; padding-left: 1.25rem; margin: 1.5rem 0; color: #525252; font-style: italic; }
 </style>
 
-<div class="detail-wrap">
+<div class="mx-auto max-w-[760px]">
 
-    <a asp-action="@backAction" class="btn btn-link detail-back">← @backLabel</a>
+    <a asp-action="@backAction"
+       class="mb-6 inline-block text-[0.825rem] text-gray-600 transition hover:-translate-x-0.5 hover:text-black">
+        ← @backLabel
+    </a>
 
-    <div class="detail-meta">
-        <div class="detail-avatar">@Initials(authorName)</div>
-        <span class="detail-author">
-            <strong>@authorName</strong>
-            <span class="dot">·</span>
-            @RelativeTime(Model.CreatedAt)
-            @if (Model.UpdatedAt.HasValue && Model.UpdatedAt.Value > Model.CreatedAt.AddMinutes(1))
+    <div class="mb-6 flex items-center gap-[0.6rem] text-[0.85rem] text-gray-600">
+        <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 font-semibold text-[0.75rem] text-gray-600">@ViewHelpers.Initials(authorName)</div>
+        <span>
+            <strong class="font-medium text-black">@authorName</strong>
+            <span class="mx-[0.35rem] text-gray-400">·</span>
+            @ViewHelpers.RelativeTime(blog.CreatedAt)
+            @if (blog.UpdatedAt.HasValue && blog.UpdatedAt.Value > blog.CreatedAt.AddMinutes(1))
             {
-                <span class="dot">·</span>
-                <span>edited @RelativeTime(Model.UpdatedAt.Value)</span>
+                <span class="mx-[0.35rem] text-gray-400">·</span>
+                <span>edited @ViewHelpers.RelativeTime(blog.UpdatedAt.Value)</span>
             }
         </span>
     </div>
 
-    <h1 class="detail-title">@Model.Title</h1>
+    <h1 class="font-display leading-[1.15] tracking-[-0.03em] mb-6 text-[clamp(2rem,4vw,3rem)] text-black">@blog.Title</h1>
 
-    <div class="detail-badges">
-        <span class="detail-badge priority-@Model.Priority">P@(Model.Priority)</span>
-        @if (Model.Status == "DRAFT")
+    <div class="mb-8 flex flex-wrap gap-2">
+        <span class="rounded-full px-[0.7rem] py-[0.3rem] font-medium text-[0.72rem] @PriorityBadgeColors(blog.Priority)">P@(blog.Priority)</span>
+        @if (blog.Status == "DRAFT")
         {
-            <span class="detail-badge status-draft">Draft</span>
+            <span class="rounded-full bg-draft-bg px-[0.7rem] py-[0.3rem] font-medium text-[0.72rem] text-draft-text">Draft</span>
         }
-        else if (Model.Status == "PRIVATE")
+        else if (blog.Status == "PRIVATE")
         {
-            <span class="detail-badge status-private">Private</span>
+            <span class="rounded-full bg-private-bg px-[0.7rem] py-[0.3rem] font-medium text-[0.72rem] text-private-text">Private</span>
         }
     </div>
 
-    <article class="detail-content">
-        @Html.Raw(Model.Content)
+    <article class="post-content">
+        @Html.Raw(blog.Content)
     </article>
 
-    <div class="detail-footer">
-        <span class="detail-footer-info">
-            Posted @Model.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy 'at' HH:mm")
+    <div class="flex flex-wrap items-center gap-2 border-t border-gray-200 pt-6">
+        <span class="mr-auto text-[0.8rem] text-gray-400">
+            Posted @blog.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy 'at' HH:mm")
         </span>
 
         @if (canEdit)
         {
-            <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-from="@from"
-               class="btn btn-secondary btn-sm">
+            <a asp-action="Edit" asp-route-id="@blog.Id" asp-route-from="@from"
+               class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-gray-300 bg-white px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-black no-underline transition hover:-translate-y-px hover:border-gray-400 hover:bg-gray-50 active:translate-y-0">
                 Edit
             </a>
-            <button type="button" class="btn btn-danger btn-sm" id="open-delete">
+            <button type="button" id="open-delete"
+                    class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-error px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-white transition hover:shadow-btn-danger-hover hover:-translate-y-px hover:opacity-90 active:translate-y-0">
                 Delete
             </button>
         }
     </div>
+
+    <partial name="_CommentSection" model="Model" />
 </div>
 
 @if (canEdit)
 {
     <!-- Delete confirmation modal -->
     <div id="delete-modal"
-         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);
-                z-index:1000;align-items:center;justify-content:center;padding:1rem">
-        <div style="background:#fff;border-radius:6px;max-width:440px;width:100%;
-                    padding:2rem;box-shadow:0 25px 60px rgba(0,0,0,0.2)">
-            <h2 style="font-family:var(--font-display);font-size:1.35rem;
-                       letter-spacing:-0.02em;margin-bottom:0.5rem">
-                Delete this post?
-            </h2>
-            <p style="font-size:0.875rem;color:var(--gray-600);margin-bottom:1.5rem;line-height:1.6">
-                "<strong>@Model.Title</strong>" will be permanently deleted. This action cannot be undone.
+         class="z-[1000] fixed inset-0 hidden items-center justify-center bg-black/45 p-4">
+        <div class="w-full max-w-[440px] rounded-md bg-white p-8 shadow-[0_25px_60px_rgba(0,0,0,0.2)]">
+            <h2 class="font-display mb-2 tracking-tight text-[1.35rem]">Delete this post?</h2>
+            <p class="mb-6 text-sm leading-relaxed text-gray-600">
+                "<strong>@blog.Title</strong>" will be permanently deleted. This action cannot be undone.
             </p>
-            <div style="display:flex;justify-content:flex-end;gap:0.5rem">
-                <button type="button" id="cancel-delete" class="btn btn-ghost btn-sm">Cancel</button>
-                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" style="margin:0">
+            <div class="flex justify-end gap-2">
+                <button type="button" id="cancel-delete"
+                        class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-gray-200 bg-transparent px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-gray-600 transition hover:border-gray-300 hover:bg-gray-100 hover:text-black">Cancel</button>
+                <form asp-action="Delete" asp-route-id="@blog.Id" asp-route-from="@from" method="post" class="m-0">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-danger btn-sm">Delete post</button>
+                    <button type="submit"
+                            class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-error px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-white transition hover:opacity-90">Delete post</button>
                 </form>
             </div>
         </div>
@@ -276,14 +123,27 @@
             const openBtn = document.getElementById('open-delete');
             const cancelBtn = document.getElementById('cancel-delete');
 
-            openBtn.addEventListener('click', () => modal.style.display = 'flex');
-            cancelBtn.addEventListener('click', () => modal.style.display = 'none');
+            function openModal() {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            openBtn.addEventListener('click', openModal);
+            cancelBtn.addEventListener('click', closeModal);
             modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.style.display = 'none';
+                if (e.target === modal) closeModal();
             });
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') modal.style.display = 'none';
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
             });
         })();
     </script>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }

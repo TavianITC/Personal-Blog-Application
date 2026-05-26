@@ -35,6 +35,8 @@ namespace Personal_Blog_Application.Controllers
                 var userId = _userManager.GetUserId(User);
                 vm.Feed = await _context.Blogs
                     .Include(b => b.User)
+                    .Include(b => b.Comments)
+                    .AsSplitQuery()
                     .Where(b => b.Status == "PUBLISHED" && b.CreatedBy != userId)
                     .OrderByDescending(b => b.CreatedAt)
                     .Take(20)
