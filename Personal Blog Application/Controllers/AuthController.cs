@@ -80,7 +80,7 @@ namespace Personal_Blog_Application.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return RedirectToAction("Login", "Auth");
+            return RedirectToAction("Index", "Home");
         }
 
         // GET: /auth/register

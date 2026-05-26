@@ -51,7 +51,7 @@
             @if (blog.UpdatedAt.HasValue && blog.UpdatedAt.Value > blog.CreatedAt.AddMinutes(1))
             {
                 <span class="mx-[0.35rem] text-gray-400">·</span>
-                <span>edited @ViewHelpers.RelativeTime(blog.UpdatedAt.Value)</span>
+                <span>Edited @ViewHelpers.RelativeTime(blog.UpdatedAt.Value)</span>
             }
         </span>
     </div>
