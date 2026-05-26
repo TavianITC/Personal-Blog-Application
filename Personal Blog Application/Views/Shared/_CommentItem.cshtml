@@ -1,4 +1,4 @@
-@model Personal_Blog_Application.Models.Comment
+﻿@model Personal_Blog_Application.Models.Comment
 
 @{
     var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -9,20 +9,21 @@
         : Model.Content;
 }
 
-<div class="comment-item" data-comment-id="@Model.Id">
-    <div class="comment-avatar">@ViewHelpers.Initials(authorName)</div>
-    <div class="comment-body">
-        <div class="comment-meta">
-            <strong>@authorName</strong>
-            <span class="dot">·</span>
+<div class="animate-fade-in-up flex gap-[0.85rem] border-b border-gray-100 py-4 last:border-b-0" data-comment-id="@Model.Id">
+    <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 font-semibold text-[0.7rem] text-gray-600">@ViewHelpers.Initials(authorName)</div>
+    <div class="min-w-0 flex-1">
+        <div class="mb-[0.3rem] flex items-center gap-[0.4rem] text-[0.78rem] text-gray-600">
+            <strong class="font-medium text-black">@authorName</strong>
+            <span class="text-gray-400">·</span>
             <span>@ViewHelpers.RelativeTime(Model.CreatedAt)</span>
             @if (canDelete)
             {
-                <button type="button" class="comment-delete js-delete-comment"
+                <button type="button"
+                        class="js-delete-comment ml-auto inline-flex cursor-pointer items-center justify-center rounded border-0 bg-transparent px-[0.4rem] py-1 text-gray-400 transition hover:bg-danger-bg hover:text-error"
                         data-id="@Model.Id"
                         data-snippet="@snippet"
                         aria-label="Delete comment" title="Delete comment">
-                    <svg viewBox="0 0 24 24">
+                    <svg class="h-[14px] w-[14px] fill-none stroke-current" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                         <polyline points="3 6 5 6 21 6" />
                         <path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6" />
                         <path d="M10 11v6M14 11v6" />
@@ -31,6 +32,6 @@
                 </button>
             }
         </div>
-        <p class="comment-content">@Model.Content</p>
+        <p class="leading-[1.6] m-0 whitespace-pre-wrap break-words text-[0.9rem] text-gray-800">@Model.Content</p>
     </div>
 </div>

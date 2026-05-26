@@ -5,25 +5,21 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="alert alert-danger text-center">
-                <h1 class="display-4">Oops! Something went wrong.</h1>
-                <hr />
-                @if (Model.ShowRequestId)
-                {
-                    <p>
-                        <strong>Request ID:</strong>
-                        <code>@Model.RequestId</code>
-                    </p>
-                }
-                <p class="text-muted">
-                    An error occurred while processing your request.
-                    Please try again later.
-                </p>
-                <a href="/" class="btn btn-primary mt-3">Go to Home</a>
-            </div>
-        </div>
+<div class="mt-12 flex justify-center">
+    <div class="w-full max-w-2xl rounded-md border border-danger-border bg-danger-bg p-8 text-center text-error">
+        <h1 class="font-display mb-4 text-4xl tracking-tight md:text-5xl">Oops! Something went wrong.</h1>
+        <hr class="my-4 border-danger-border" />
+        @if (Model.ShowRequestId)
+        {
+            <p class="mb-2 text-sm">
+                <strong>Request ID:</strong>
+                <code class="font-mono text-xs">@Model.RequestId</code>
+            </p>
+        }
+        <p class="mb-6 text-sm leading-relaxed text-gray-600">
+            An error occurred while processing your request.<br />
+            Please try again later.
+        </p>
+        <a href="/" class="h-[42px] inline-flex items-center justify-center rounded bg-black px-5 text-sm font-medium text-white no-underline transition hover:opacity-90">Go to Home</a>
     </div>
 </div>

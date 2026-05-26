@@ -1,210 +1,44 @@
-@model Personal_Blog_Application.ViewModels.BlogDetailViewModel
+﻿@model Personal_Blog_Application.ViewModels.BlogDetailViewModel
 
-<style>
-    .comments-wrap {
-        margin-top: 3rem;
-    }
-
-    .comments-title {
-        font-family: var(--font-display);
-        font-size: 1.4rem;
-        letter-spacing: -0.02em;
-        margin-bottom: 1.5rem;
-        color: var(--black);
-    }
-
-    .comments-form {
-        background: var(--white);
-        border: 1px solid var(--gray-200);
-        border-radius: var(--radius-md);
-        padding: 1.25rem;
-        margin-bottom: 2rem;
-    }
-
-    .comments-textarea {
-        width: 100%;
-        min-height: 90px;
-        padding: 0.75rem 1rem;
-        font-family: var(--font-body);
-        font-size: 0.9rem;
-        line-height: 1.55;
-        color: var(--black);
-        background: var(--gray-50);
-        border: 1px solid var(--gray-200);
-        border-radius: var(--radius);
-        outline: none;
-        resize: vertical;
-        transition: border-color var(--transition), background var(--transition);
-    }
-
-        .comments-textarea:focus {
-            border-color: var(--black);
-            background: var(--white);
-        }
-
-        .comments-textarea::placeholder {
-            color: var(--gray-400);
-        }
-
-    .comments-form-error {
-        display: block;
-        font-size: 0.775rem;
-        color: var(--error);
-        margin-top: 0.4rem;
-        min-height: 1em;
-    }
-
-    .comments-form-actions {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 0.75rem;
-    }
-
-    .comments-empty {
-        text-align: center;
-        padding: 2.5rem 1rem;
-        color: var(--gray-400);
-        font-size: 0.875rem;
-        border: 1px dashed var(--gray-200);
-        border-radius: var(--radius-md);
-    }
-
-    .comment-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-    }
-
-    .comment-item {
-        display: flex;
-        gap: 0.85rem;
-        padding: 1rem 0;
-        border-bottom: 1px solid var(--gray-100);
-        animation: comment-fade-in 0.25s ease-out;
-    }
-
-        .comment-item:last-child {
-            border-bottom: none;
-        }
-
-    @@keyframes comment-fade-in {
-        from { opacity: 0; transform: translateY(-4px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .comment-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: var(--gray-200);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.7rem;
-        font-weight: 600;
-        color: var(--gray-600);
-        flex-shrink: 0;
-    }
-
-    .comment-body {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .comment-meta {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.78rem;
-        color: var(--gray-600);
-        margin-bottom: 0.3rem;
-    }
-
-        .comment-meta strong {
-            font-weight: 500;
-            color: var(--black);
-        }
-
-        .comment-meta .dot {
-            color: var(--gray-400);
-        }
-
-    .comment-content {
-        font-size: 0.9rem;
-        line-height: 1.6;
-        color: var(--gray-800);
-        margin: 0;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-    }
-
-    .comment-delete {
-        margin-left: auto;
-        padding: 0.25rem 0.4rem;
-        background: transparent;
-        border: none;
-        border-radius: var(--radius);
-        color: var(--gray-400);
-        cursor: pointer;
-        transition: background var(--transition), color var(--transition);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .comment-delete:hover {
-        background: #fef2f2;
-        color: var(--error);
-    }
-
-    .comment-delete svg {
-        width: 14px;
-        height: 14px;
-        stroke: currentColor;
-        fill: none;
-        stroke-width: 1.6;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-</style>
-
-<section id="comments" class="comments-wrap"
+<section id="comments" class="mt-12"
          data-comments-create-url="@Url.Action("Create", "Comments")"
          data-comments-delete-base="@Url.Action("Delete", "Comments")">
-    <h2 class="comments-title">
+    <h2 class="font-display mb-6 tracking-tight text-[1.4rem] text-black">
         <span>Comment@(Model.Comments.Count != 1 ? "s" : "")</span>
-        <span class="comments-count">(<span id="comments-count-num">@Model.Comments.Count</span>)</span>
+        <span>(<span id="comments-count-num">@Model.Comments.Count</span>)</span>
     </h2>
 
     <!-- Comment form -->
     <form id="comment-form"
           asp-controller="Comments" asp-action="Create" method="post"
-          class="comments-form">
+          class="mb-8 rounded-md border border-gray-200 bg-white p-5">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="NewComment.BlogId" />
         <input type="hidden" asp-for="NewComment.From" />
 
         <textarea asp-for="NewComment.Content"
-                  class="comments-textarea"
+                  class="leading-[1.55] min-h-[90px] w-full resize-y rounded border border-gray-200 bg-gray-50 px-4 py-3 font-sans text-[0.9rem] text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white"
                   placeholder="Share your thoughts…"
                   maxlength="1000"></textarea>
-        <span asp-validation-for="NewComment.Content" class="comments-form-error"
-              id="comment-form-error"></span>
+        <span asp-validation-for="NewComment.Content"
+              id="comment-form-error"
+              class="mt-[0.4rem] block min-h-[1em] text-[0.775rem] text-error"></span>
 
-        <div class="comments-form-actions">
-            <button type="submit" class="btn btn-primary btn-sm" id="comment-submit">
+        <div class="mt-3 flex justify-end">
+            <button type="submit" id="comment-submit"
+                    class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-black px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-white transition hover:-translate-y-px hover:shadow-btn-primary-hover hover:opacity-90 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50">
                 Post comment
             </button>
         </div>
     </form>
 
     <div id="comments-empty"
-         class="comments-empty"
+         class="rounded-md border border-dashed border-gray-200 px-4 py-10 text-center text-sm text-gray-400"
          style="@(Model.Comments.Any() ? "display:none" : "")">
         No comments yet. Be the first to share your thoughts.
     </div>
 
-    <div id="comment-list" class="comment-list">
+    <div id="comment-list" class="flex flex-col">
         @foreach (var c in Model.Comments)
         {
             <partial name="_CommentItem" model="c" />
@@ -214,20 +48,19 @@
 
 <!-- Delete confirmation modal (shared, configured per click) -->
 <div id="comment-delete-modal"
-     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);
-            z-index:1000;align-items:center;justify-content:center;padding:1rem">
-    <div style="background:#fff;border-radius:6px;max-width:440px;width:100%;
-                padding:2rem;box-shadow:0 25px 60px rgba(0,0,0,0.2)">
-        <h2 style="font-family:var(--font-display);font-size:1.25rem;
-                   letter-spacing:-0.02em;margin-bottom:0.5rem">
+     class="z-[1000] fixed inset-0 hidden items-center justify-center bg-black/45 p-4">
+    <div class="w-full max-w-[440px] rounded-md bg-white p-8 shadow-[0_25px_60px_rgba(0,0,0,0.2)]">
+        <h2 class="font-display mb-2 tracking-tight text-[1.25rem]">
             Delete this comment?
         </h2>
-        <p style="font-size:0.875rem;color:var(--gray-600);margin-bottom:1.5rem;line-height:1.6">
+        <p class="mb-6 text-sm leading-relaxed text-gray-600">
             "<span id="comment-delete-snippet"></span>" will be permanently deleted.
         </p>
-        <div style="display:flex;justify-content:flex-end;gap:0.5rem">
-            <button type="button" id="comment-delete-cancel" class="btn btn-ghost btn-sm">Cancel</button>
-            <button type="button" id="comment-delete-confirm" class="btn btn-danger btn-sm">Delete</button>
+        <div class="flex justify-end gap-2">
+            <button type="button" id="comment-delete-cancel"
+                    class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-gray-200 bg-transparent px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-gray-600 transition hover:-translate-y-px hover:border-gray-300 hover:bg-gray-100 hover:text-black active:translate-y-0">Cancel</button>
+            <button type="button" id="comment-delete-confirm"
+                    class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-error px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-white transition hover:-translate-y-px hover:shadow-btn-danger-hover hover:opacity-90 active:translate-y-0">Delete</button>
         </div>
     </div>
 </div>
@@ -257,6 +90,15 @@
             return input ? input.value : '';
         }
 
+        function openModal() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
         function setCount(n) {
             countNum.textContent = n;
             emptyEl.style.display = n > 0 ? 'none' : '';
@@ -264,7 +106,7 @@
 
         // ── Create via AJAX ───────────────────────────────────────
         form.addEventListener('submit', async function (e) {
-            e.preventDefault(); // prevent normal form submission to allow AJAX
+            e.preventDefault();
             errorEl.textContent = '';
             submitBtn.disabled = true;
 
@@ -299,24 +141,24 @@
             }
         });
 
-        // ── Delete: open modal (event delegation so dynamically-added comments work) ──
+        // ── Delete: open modal (event delegation) ──
         list.addEventListener('click', function (e) {
             const btn = e.target.closest('.js-delete-comment');
             if (!btn) return;
             pendingDeleteId = btn.getAttribute('data-id');
             snippetEl.textContent = btn.getAttribute('data-snippet') || '';
-            modal.style.display = 'flex';
+            openModal();
         });
 
         cancelBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
+            closeModal();
             pendingDeleteId = null;
         });
         modal.addEventListener('click', (e) => {
             if (e.target === modal) cancelBtn.click();
         });
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.style.display === 'flex') cancelBtn.click();
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) cancelBtn.click();
         });
 
         // ── Delete: confirm + AJAX ────────────────────────────────
@@ -353,7 +195,7 @@
                 alert('Network error. Please try again.');
             } finally {
                 confirmBtn.disabled = false;
-                modal.style.display = 'none';
+                closeModal();
                 pendingDeleteId = null;
             }
         });

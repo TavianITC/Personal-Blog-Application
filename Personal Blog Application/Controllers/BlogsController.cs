@@ -175,7 +175,7 @@ namespace Personal_Blog_Application.Controllers
         // POST /blogs/edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, BlogCreateViewModel model)
+        public async Task<IActionResult> Edit(int id, BlogCreateViewModel model, string? from)
         {
             if (!ModelState.IsValid)
             {
@@ -196,13 +196,19 @@ namespace Personal_Blog_Application.Controllers
             await _context.SaveChangesAsync();
 
             TempData["Success"] = "Blog updated successfully.";
+
+            // If the user reached Edit through the Detail page (from is set),
+            // return them to Detail so they see the updated post in context.
+            // Direct edits from Mine (no from) keep the original Mine landing.
+            if (!string.IsNullOrEmpty(from))
+                return RedirectToAction(nameof(Detail), new { id, from });
             return RedirectToAction(nameof(Mine));
         }
 
         // POST /blogs/delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, string? from)
         {
             var blog = await _context.Blogs.FindAsync(id);
             if (blog == null) return NotFound();
@@ -212,6 +218,11 @@ namespace Personal_Blog_Application.Controllers
             await _context.SaveChangesAsync();
 
             TempData["Success"] = "Blog deleted.";
+
+            // Post no longer exists, so we can't go back to Detail — return to the
+            // listing the user came from.
+            if (from == "index")
+                return RedirectToAction(nameof(Index));
             return RedirectToAction(nameof(Mine));
         }
 

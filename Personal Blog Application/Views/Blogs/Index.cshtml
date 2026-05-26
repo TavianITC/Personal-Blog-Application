@@ -1,4 +1,4 @@
-@model List<Personal_Blog_Application.Models.Blog>
+﻿@model List<Personal_Blog_Application.Models.Blog>
 
 @{
     ViewData["Title"] = "Posts";
@@ -12,166 +12,14 @@
                   || !string.IsNullOrWhiteSpace(filterSort);
 }
 
-<style>
-    /* ── Header (Posts) ── */
-    .posts-header {
-        margin-bottom: 1.5rem;
-    }
-
-    .posts-eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.7rem;
-        font-weight: 500;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--gray-600);
-        background: var(--gray-100);
-        padding: 0.3rem 0.65rem;
-        border-radius: 100px;
-        margin-bottom: 0.85rem;
-    }
-
-        .posts-eyebrow::before {
-            content: '';
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: var(--black);
-        }
-
-    .posts-header h1 {
-        font-family: var(--font-display);
-        font-size: clamp(2rem, 4vw, 2.75rem);
-        letter-spacing: -0.03em;
-        margin-bottom: 0.4rem;
-    }
-
-    .posts-header p {
-        font-size: 0.925rem;
-        color: var(--gray-600);
-        margin: 0 0 1rem;
-        max-width: 540px;
-        line-height: 1.6;
-    }
-
-    .posts-toolbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        flex-wrap: wrap;
-        margin-bottom: 1.25rem;
-    }
-
-    .posts-count {
-        font-size: 0.85rem;
-        color: var(--gray-600);
-    }
-
-    .toolbar-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    /* ── Filter bar ── */
-    .filter-bar {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-    }
-
-    .filter-input,
-    .filter-select {
-        height: 38px;
-        padding: 0 0.9rem;
-        font-family: var(--font-body);
-        font-size: 0.85rem;
-        color: var(--black);
-        border: 1px solid var(--gray-200);
-        border-radius: var(--radius);
-        background: var(--gray-50);
-        outline: none;
-        transition: border-color var(--transition), background var(--transition);
-    }
-
-        .filter-input::placeholder {
-            color: var(--gray-400);
-        }
-
-        .filter-input:focus,
-        .filter-select:focus {
-            border-color: var(--black);
-            background: var(--white);
-        }
-
-    .filter-input {
-        min-width: 200px;
-        flex: 1 1 200px;
-    }
-
-    .filter-select {
-        cursor: pointer;
-        min-width: 200px;
-    }
-
-    /* ── Card grid (card visuals come from _Layout's .blog-card-link) ── */
-    .posts-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.25rem;
-    }
-
-    .admin-note {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.72rem;
-        color: var(--gray-600);
-        background: var(--gray-100);
-        padding: 0.35rem 0.75rem;
-        border-radius: 100px;
-        margin-left: 0.5rem;
-    }
-
-        .admin-note::before {
-            content: '';
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: #b54708;
-        }
-
-    /* ── Empty state ── */
-    .empty-state {
-        text-align: center;
-        padding: 4rem 0;
-        color: var(--gray-400);
-    }
-
-        .empty-state .empty-title {
-            font-family: var(--font-display);
-            font-size: 1.5rem;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.5rem;
-            color: var(--gray-600);
-        }
-
-    @@media (max-width: 768px) {
-        .posts-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-
 <!-- Header section -->
-<div class="posts-header">
-    <span class="posts-eyebrow">@(isAdmin ? "Admin" : "Community")</span>
-    <h1>Posts</h1>
-    <p>
+<div class="mb-6">
+    <span class="tracking-[0.1em] mb-[0.85rem] inline-flex items-center gap-[0.4rem] rounded-full bg-gray-100 px-[0.65rem] py-[0.3rem] font-medium uppercase text-[0.7rem] text-gray-600
+                 before:content-[''] before:h-[5px] before:w-[5px] before:rounded-full before:bg-black">
+        @(isAdmin ? "Admin" : "Community")
+    </span>
+    <h1 class="font-display tracking-[-0.03em] mb-[0.4rem] text-[clamp(2rem,4vw,2.75rem)]">Posts</h1>
+    <p class="m-0 mb-4 max-w-[540px] leading-relaxed text-[0.925rem] text-gray-600">
         @if (isAdmin)
         {
             <text>
@@ -189,37 +37,43 @@
     </p>
 </div>
 
-<div class="posts-toolbar">
-    <span class="posts-count">
+<div class="mb-5 flex flex-wrap items-center justify-between gap-4">
+    <span class="text-[0.85rem] text-gray-600">
         @Model.Count post@(Model.Count != 1 ? "s" : "") @(hasFilters ? "found" : isAdmin ? "total" : "published")
         @if (isAdmin)
         {
-            <span class="admin-note">Admin view — all statuses</span>
+            <span class="ml-2 inline-flex items-center gap-[0.4rem] rounded-full bg-gray-100 px-3 py-[0.35rem] text-[0.72rem] text-gray-600
+                          before:content-[''] before:h-[5px] before:w-[5px] before:rounded-full before:bg-[#b54708]">
+                Admin view — all statuses
+            </span>
         }
     </span>
-    <div class="toolbar-actions">
-        <a asp-action="Mine" class="btn btn-secondary btn-sm">My blogs</a>
-        <a asp-action="Create" class="btn btn-primary btn-sm">+ New post</a>
+    <div class="flex gap-2">
+        <a asp-action="Mine"
+           class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-gray-300 bg-white px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-black no-underline transition hover:-translate-y-px hover:border-gray-400 hover:bg-gray-50 active:translate-y-0">My blogs</a>
+        <a asp-action="Create"
+           class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-black px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-white no-underline transition hover:shadow-btn-primary-hover hover:-translate-y-px hover:opacity-90 active:translate-y-0">+ New post</a>
     </div>
 </div>
 
 <!-- Filter bar -->
-<form method="get" class="filter-bar" id="filter-form">
-    <input type="text" name="title" value="@filterTitle" placeholder="Search title…" class="filter-input" />
-    <input type="text" name="author" value="@filterAuthor" placeholder="Author…" class="filter-input" />
-    <select name="sort" class="filter-select">
+<form method="get" id="filter-form" class="mb-6 flex flex-wrap items-center gap-2">
+    <input type="text" name="title" value="@filterTitle" placeholder="Search title…"
+           class="h-[38px] flex-[1_1_200px] min-w-[200px] rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+    <input type="text" name="author" value="@filterAuthor" placeholder="Author…"
+           class="h-[38px] flex-[1_1_200px] min-w-[200px] rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+    <select name="sort"
+            class="h-[38px] min-w-[200px] cursor-pointer rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition focus:border-black focus:bg-white">
         <option value="" selected="@(string.IsNullOrEmpty(filterSort))">Sort: Newest</option>
-        <option value="priority_desc" selected="@(filterSort == "priority_desc" || filterSort == "priority")">
-            Sort: Priority — High to low
-        </option>
-        <option value="priority_asc" selected="@(filterSort == "priority_asc")">
-            Sort: Priority — Low to high
-        </option>
+        <option value="priority_desc" selected="@(filterSort == "priority_desc" || filterSort == "priority")">Sort: Priority — High to low</option>
+        <option value="priority_asc" selected="@(filterSort == "priority_asc")">Sort: Priority — Low to high</option>
     </select>
-    <button type="submit" class="btn btn-secondary btn-sm">Apply</button>
+    <button type="submit"
+            class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-gray-300 bg-white px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-black transition hover:-translate-y-px hover:border-gray-400 hover:bg-gray-50 active:translate-y-0">Apply</button>
     @if (hasFilters)
     {
-        <a asp-action="Index" class="btn btn-ghost btn-sm">Clear</a>
+        <a asp-action="Index"
+           class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-gray-200 bg-transparent px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-gray-600 no-underline transition hover:border-gray-300 hover:bg-gray-100 hover:text-black">Clear</a>
     }
 </form>
 
@@ -227,35 +81,34 @@
 {
     if (hasFilters)
     {
-        <div class="empty-state">
-            <p class="empty-title">No posts match</p>
-            <p style="font-size:0.875rem;margin-bottom:1.5rem">
-                Try a different keyword or clear your filters.
-            </p>
-            <a asp-action="Index" class="btn btn-secondary">Clear filters</a>
+        <div class="py-16 text-center text-gray-400">
+            <p class="font-display mb-2 text-2xl tracking-tight text-gray-600">No posts match</p>
+            <p class="mb-6 text-sm">Try a different keyword or clear your filters.</p>
+            <a asp-action="Index"
+               class="h-[42px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-gray-300 bg-white px-5 font-sans text-sm font-medium leading-none text-black no-underline transition hover:border-gray-400 hover:bg-gray-50">Clear filters</a>
         </div>
     }
     else
     {
-        <div class="empty-state">
-            <p class="empty-title">Quiet around here</p>
-            <p style="font-size:0.875rem;margin-bottom:1.5rem">
-                Nobody has published anything yet. Be the first.
-            </p>
-            <a asp-action="Create" class="btn btn-primary">Write the first post</a>
+        <div class="py-16 text-center text-gray-400">
+            <p class="font-display mb-2 text-2xl tracking-tight text-gray-600">Quiet around here</p>
+            <p class="mb-6 text-sm">Nobody has published anything yet. Be the first.</p>
+            <a asp-action="Create"
+               class="h-[42px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-black px-5 font-sans text-sm font-medium leading-none text-white no-underline transition hover:opacity-90">Write the first post</a>
         </div>
     }
 }
 else
 {
-    <div class="posts-grid">
+    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
         @foreach (var blog in Model)
         {
             <partial name="_BlogCard"
                      model="blog"
                      view-data='new ViewDataDictionary(ViewData) {
                          { "ShowStatusPill", isAdmin },
-                         { "Compact", false }
+                         { "Compact", false },
+                         { "From", "index" }
                      }' />
         }
     </div>

@@ -3,14 +3,6 @@
   "defaultProvider": "cdnjs",
   "libraries": [
     {
-      "library": "bootstrap@5.3.2",
-      "destination": "wwwroot/lib/bootstrap/",
-      "files": [
-        "dist/css/bootstrap.min.css",
-        "dist/js/bootstrap.bundle.min.js"
-      ]
-    },
-    {
       "library": "jquery@3.7.1",
       "destination": "wwwroot/lib/jquery/",
       "files": [
