@@ -4,7 +4,9 @@
     var blog = Model.Blog;
     ViewData["Title"] = blog.Title;
     var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-    var canEdit = User.IsInRole("ADMIN") || blog.CreatedBy == userId;
+    var isOwner = blog.CreatedBy == userId;
+    var canEdit = isOwner;
+    var canDelete = isOwner || User.IsInRole("ADMIN");
 
     var from = Context.Request.Query["from"].ToString();
     var backAction = from == "mine" ? "Mine" : "Index";
@@ -85,6 +87,9 @@
                class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-gray-300 bg-white px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-black no-underline transition hover:-translate-y-px hover:border-gray-400 hover:bg-gray-50 active:translate-y-0">
                 Edit
             </a>
+        }
+        @if (canDelete)
+        {
             <button type="button" id="open-delete"
                     class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-error px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-white transition hover:shadow-btn-danger-hover hover:-translate-y-px hover:opacity-90 active:translate-y-0">
                 Delete
@@ -95,7 +100,7 @@
     <partial name="_CommentSection" model="Model" />
 </div>
 
-@if (canEdit)
+@if (canDelete)
 {
     <!-- Delete confirmation modal -->
     <div id="delete-modal"
