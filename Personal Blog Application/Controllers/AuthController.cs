@@ -110,6 +110,14 @@ namespace Personal_Blog_Application.Controllers
                 return View(registerModel);
             }
 
+            // Check if username already exists
+            var existingUsername = await _userManager.FindByNameAsync(registerModel.Username);
+            if (existingUsername != null)
+            {
+                ModelState.AddModelError("Username", "Username already exists.");
+                return View(registerModel);
+            }
+
             var user = new User
             {
                 UserName = registerModel.Username,

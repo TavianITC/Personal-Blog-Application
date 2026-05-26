@@ -75,6 +75,8 @@ namespace Personal_Blog_Application.Controllers
             await _context.SaveChangesAsync();
 
             // Re-fetch with the User nav property so the partial can render the author
+            // Because when create Comment, only CreatedBy is set, User is not populated until we query it again.
+            // The Blog is not needed because we don't need Blog's data in the partial
             var saved = await _context.Comments
                 .Include(c => c.User)
                 .FirstAsync(c => c.Id == comment.Id);
