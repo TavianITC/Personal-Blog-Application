@@ -1,0 +1,132 @@
+@model Personal_Blog_Application.ViewModels.UserEditViewModel
+
+@{
+    ViewData["Title"] = $"Edit {Model.UserName}";
+    var isSelf = ViewBag.IsSelf as bool? ?? false;
+}
+
+<div class="mx-auto max-w-[640px]">
+
+    <div class="mb-8">
+        <a asp-action="Index"
+           class="mb-4 inline-block text-[0.825rem] text-gray-600 transition hover:-translate-x-0.5 hover:text-black">
+            ← Back to users
+        </a>
+        <h1 class="font-display tracking-[-0.03em] text-[2rem]">Edit user</h1>
+    </div>
+
+    @if (isSelf)
+    {
+        <div class="mb-6 rounded-md border border-gray-200 bg-gray-50 px-4 py-[0.75rem] text-[0.825rem] text-gray-600">
+            <strong class="font-medium text-black">This is you.</strong>
+            You cannot change your own role or deactivate your own account.
+        </div>
+    }
+
+    <div asp-validation-summary="ModelOnly" class="mb-4 hidden rounded-md border border-danger-border bg-danger-bg px-4 py-[0.65rem] text-[0.85rem] text-error empty:hidden [&:has(li)]:block"></div>
+
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post"
+          class="rounded-md border border-gray-200 bg-white p-7">
+
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        <!-- Identity header (email is the immutable account identifier) -->
+        <div class="mb-6 flex items-center gap-3 border-b border-gray-100 pb-6">
+            <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 font-semibold text-[0.85rem] text-gray-600">
+                @ViewHelpers.Initials(Model.UserName)
+            </div>
+            <div class="min-w-0">
+                <div class="text-[0.7rem] uppercase tracking-[0.08em] text-gray-400">Account</div>
+                <div class="overflow-hidden text-ellipsis whitespace-nowrap font-medium text-[0.9rem] text-black">@Model.Email</div>
+            </div>
+        </div>
+
+        <!-- Username -->
+        <div class="mb-6">
+            <label asp-for="UserName" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Username</label>
+            <input asp-for="UserName" placeholder="Enter username…" autocomplete="off"
+                   class="h-12 w-full rounded border border-gray-200 bg-gray-50 px-4 font-sans text-[0.9rem] outline-none transition focus:border-black focus:bg-white" />
+            <span asp-validation-for="UserName" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
+            <p class="mt-[0.4rem] text-[0.775rem] text-gray-400">
+                Letters, digits, and <code>. _ @@ + -</code> only. Must be unique across the platform.
+            </p>
+        </div>
+
+        <!-- Role -->
+        <div class="mb-6">
+            <label asp-for="Role" class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Role</label>
+            @if (isSelf)
+            {
+                @* Disabled <select> doesn't submit — pin the current role via hidden input. *@
+                <select disabled
+                        class="h-12 w-full cursor-not-allowed rounded border border-gray-200 bg-gray-50 px-4 font-sans text-sm opacity-60 outline-none">
+                    <option selected>@Model.Role @(Model.Role == "ADMIN" ? "— full platform access" : "— standard account")</option>
+                </select>
+                <input type="hidden" asp-for="Role" />
+            }
+            else
+            {
+                <select asp-for="Role"
+                        class="h-12 w-full cursor-pointer rounded border border-gray-200 bg-gray-50 px-4 font-sans text-sm outline-none">
+                    <option value="USER">USER — standard account</option>
+                    <option value="ADMIN">ADMIN — full platform access</option>
+                </select>
+                <span asp-validation-for="Role" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
+            }
+            <p class="mt-[0.4rem] text-[0.775rem] text-gray-400">
+                ADMIN can manage every user and see every post; USER only manages their own content.
+            </p>
+        </div>
+
+        <!-- IsActive toggle -->
+        <div class="mb-8">
+            <label class="tracking-[0.08em] mb-2 block font-medium uppercase text-[0.775rem] text-gray-600">Status</label>
+            @if (isSelf)
+            {
+                @* Self-edit: lock the value. asp-for would auto-render a "false" hidden
+                   fallback when the checkbox is disabled, so submit IsActive by hand. *@
+                <div class="flex items-start gap-3 rounded border border-gray-200 bg-gray-50 px-4 py-[0.85rem] opacity-60">
+                    <input type="checkbox" checked disabled
+                           class="mt-[0.2rem] h-4 w-4 accent-black" />
+                    <span>
+                        <span class="block font-medium text-[0.9rem] text-black">Active</span>
+                        <span class="block text-[0.8rem] text-gray-600">
+                            Inactive accounts cannot sign in. Their existing posts and comments stay visible.
+                        </span>
+                    </span>
+                </div>
+                <input type="hidden" name="IsActive" value="true" />
+            }
+            else
+            {
+                <label class="flex cursor-pointer items-start gap-3 rounded border border-gray-200 bg-gray-50 px-4 py-[0.85rem] transition hover:border-gray-300">
+                    <input type="checkbox" asp-for="IsActive"
+                           class="mt-[0.2rem] h-4 w-4 cursor-pointer accent-black" />
+                    <span>
+                        <span class="block font-medium text-[0.9rem] text-black">Active</span>
+                        <span class="block text-[0.8rem] text-gray-600">
+                            Inactive accounts cannot sign in. Their existing posts and comments stay visible.
+                        </span>
+                    </span>
+                </label>
+                <span asp-validation-for="IsActive" class="mt-[0.35rem] block text-[0.775rem] text-error"></span>
+            }
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <button type="submit"
+                    class="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-black px-6 font-sans text-sm font-medium leading-none text-white transition hover:shadow-btn-primary-hover hover:-translate-y-px hover:opacity-90 active:translate-y-0">
+                Save changes
+            </button>
+            <a asp-action="Index"
+               class="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded border border-gray-200 bg-transparent px-6 font-sans text-sm font-medium leading-none text-gray-600 no-underline transition hover:-translate-y-px hover:border-gray-300 hover:bg-gray-100 hover:text-black active:translate-y-0">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
