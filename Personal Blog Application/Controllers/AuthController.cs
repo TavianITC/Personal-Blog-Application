@@ -80,7 +80,7 @@ namespace Personal_Blog_Application.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return RedirectToAction("Login", "Auth");
+            return RedirectToAction("Index", "Home");
         }
 
         // GET: /auth/register
@@ -107,6 +107,14 @@ namespace Personal_Blog_Application.Controllers
             if (existingUser != null)
             {
                 ModelState.AddModelError("Email", "Email already exists.");
+                return View(registerModel);
+            }
+
+            // Check if username already exists
+            var existingUsername = await _userManager.FindByNameAsync(registerModel.Username);
+            if (existingUsername != null)
+            {
+                ModelState.AddModelError("Username", "Username already exists.");
                 return View(registerModel);
             }
 
