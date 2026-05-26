@@ -270,7 +270,7 @@
 
         // ── Create via AJAX ───────────────────────────────────────
         form.addEventListener('submit', async function (e) {
-            e.preventDefault();
+            e.preventDefault(); // prevent normal form submission to allow AJAX
             errorEl.textContent = '';
             submitBtn.disabled = true;
 
