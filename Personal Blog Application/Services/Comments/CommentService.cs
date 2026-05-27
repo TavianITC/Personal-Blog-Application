@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Personal_Blog_Application.Data;
 using Personal_Blog_Application.Models;
-using Personal_Blog_Application.Services.Blogs;
 using Personal_Blog_Application.Services.Common;
 using Personal_Blog_Application.ViewModels;
 using X.PagedList;
@@ -82,7 +81,7 @@ namespace Personal_Blog_Application.Services.Comments
                 .Include(c => c.User)
                 .Where(c => c.BlogId == blogId)
                 .OrderByDescending(c => c.CreatedAt)
-                .ToPagedListAsync(1, IBlogService.DefaultCommentPageSize);
+                .ToPagedListAsync(1, PaginationDefaults.PageSize);
 
             return new BlogDetailViewModel
             {

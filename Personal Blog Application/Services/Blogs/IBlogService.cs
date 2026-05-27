@@ -7,18 +7,15 @@ namespace Personal_Blog_Application.Services.Blogs
 {
     public interface IBlogService
     {
-        const int DefaultPageSize = 10;
-        const int DefaultCommentPageSize = 10;
-
         Task<IPagedList<Blog>> GetFeedAsync(
             string? title, string? author, string? sort,
             string userId, bool isAdmin,
-            int page = 1, int pageSize = DefaultPageSize);
+            int page = 1, int pageSize = PaginationDefaults.PageSize);
 
         Task<IPagedList<Blog>> GetMineAsync(
             string? title, string? sort, string? status,
             string userId,
-            int page = 1, int pageSize = DefaultPageSize);
+            int page = 1, int pageSize = PaginationDefaults.PageSize);
 
         // Counts per Status for the Mine tabs (PUBLISHED/PRIVATE/DRAFT).
         Task<IDictionary<string, int>> GetMyStatusCountsAsync(string userId);
@@ -27,7 +24,7 @@ namespace Personal_Blog_Application.Services.Blogs
 
         Task<OperationResult<BlogDetailViewModel>> GetDetailAsync(
             int id, string userId, bool isAdmin, string? from,
-            int commentPage = 1, int commentPageSize = DefaultCommentPageSize);
+            int commentPage = 1, int commentPageSize = PaginationDefaults.PageSize);
 
         Task<OperationResult<BlogCreateViewModel>> GetForEditAsync(
             int id, string userId, bool isAdmin);

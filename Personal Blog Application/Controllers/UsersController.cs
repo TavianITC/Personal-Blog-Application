@@ -25,10 +25,10 @@ namespace Personal_Blog_Application.Controllers
             _signInManager = signInManager;
         }
 
-        // GET /users?q=
-        public async Task<IActionResult> Index(string? q)
+        // GET /users?q=&page=
+        public async Task<IActionResult> Index(string? q, int page = 1)
         {
-            var items = await _users.ListAsync(q);
+            var items = await _users.ListAsync(q, page);
             ViewBag.Query = q;
             ViewBag.CurrentUserId = _userManager.GetUserId(User);
             return View(items);

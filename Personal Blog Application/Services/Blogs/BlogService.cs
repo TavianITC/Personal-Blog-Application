@@ -20,7 +20,7 @@ namespace Personal_Blog_Application.Services.Blogs
         public async Task<IPagedList<Blog>> GetFeedAsync(
             string? title, string? author, string? sort,
             string userId, bool isAdmin,
-            int page = 1, int pageSize = IBlogService.DefaultPageSize)
+            int page = 1, int pageSize = PaginationDefaults.PageSize)
         {
             IQueryable<Blog> query = _context.Blogs
                 .Include(b => b.User)
@@ -43,7 +43,7 @@ namespace Personal_Blog_Application.Services.Blogs
         public async Task<IPagedList<Blog>> GetMineAsync(
             string? title, string? sort, string? status,
             string userId,
-            int page = 1, int pageSize = IBlogService.DefaultPageSize)
+            int page = 1, int pageSize = PaginationDefaults.PageSize)
         {
             IQueryable<Blog> query = _context.Blogs
                 .Include(b => b.User)
@@ -89,7 +89,7 @@ namespace Personal_Blog_Application.Services.Blogs
 
         public async Task<OperationResult<BlogDetailViewModel>> GetDetailAsync(
             int id, string userId, bool isAdmin, string? from,
-            int commentPage = 1, int commentPageSize = IBlogService.DefaultCommentPageSize)
+            int commentPage = 1, int commentPageSize = PaginationDefaults.PageSize)
         {
             var blog = await _context.Blogs
                 .Include(b => b.User)

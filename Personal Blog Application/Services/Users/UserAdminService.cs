@@ -4,6 +4,7 @@ using Personal_Blog_Application.Data;
 using Personal_Blog_Application.Models;
 using Personal_Blog_Application.Services.Common;
 using Personal_Blog_Application.ViewModels;
+using X.PagedList;
 
 namespace Personal_Blog_Application.Services.Users
 {
@@ -18,7 +19,10 @@ namespace Personal_Blog_Application.Services.Users
             _userManager = userManager;
         }
 
-        public async Task<IReadOnlyList<UserListItemViewModel>> ListAsync(string? q)
+        public async Task<IPagedList<UserListItemViewModel>> ListAsync(
+            string? q,
+            int page = 1,
+            int pageSize = PaginationDefaults.PageSize)
         {
             IQueryable<User> query = _userManager.Users;
 
@@ -30,9 +34,16 @@ namespace Personal_Blog_Application.Services.Users
                     (u.Email != null && EF.Functions.Like(u.Email, $"%{term}%")));
             }
 
-            var users = await query.OrderBy(u => u.UserName).ToListAsync();
+            // Count + Skip/Take at the DB so paging stays cheap as the user table grows.
+            page = page < 1 ? 1 : page;
+            var totalCount = await query.CountAsync();
+            var users = await query
+                .OrderBy(u => u.UserName)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-            // Single grouped query for blog counts to avoid N+1.
+            // Single grouped query for blog counts on the current page only.
             var userIds = users.Select(u => u.Id).ToList();
             var blogCounts = await _context.Blogs
                 .Where(b => userIds.Contains(b.CreatedBy))
@@ -55,7 +66,8 @@ namespace Personal_Blog_Application.Services.Users
                     AvatarUrl = u.AvatarUrl
                 });
             }
-            return items;
+
+            return new StaticPagedList<UserListItemViewModel>(items, page, pageSize, totalCount);
         }
 
         public async Task<OperationResult<UserEditViewModel>> GetForEditAsync(string id)
