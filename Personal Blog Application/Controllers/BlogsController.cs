@@ -98,8 +98,9 @@ namespace Personal_Blog_Application.Controllers
 
             if (blog == null) return NotFound();
 
-            // PRIVATE / DRAFT posts are only visible to their owner (or ADMIN)
-            if (blog.Status != "PUBLISHED" && !CanModify(blog))
+            // PRIVATE / DRAFT posts are only visible to their owner (or ADMIN for
+            // moderation — admins can view to decide whether to delete).
+            if (blog.Status != "PUBLISHED" && !CanDelete(blog))
                 return Forbid();
 
             var from = Request.Query["from"].ToString();
@@ -159,7 +160,7 @@ namespace Personal_Blog_Application.Controllers
         {
             var blog = await _context.Blogs.FindAsync(id);
             if (blog == null) return NotFound();
-            if (!CanModify(blog)) return Forbid();
+            if (!CanEdit(blog)) return Forbid();
 
             var vm = new BlogCreateViewModel
             {
@@ -185,7 +186,7 @@ namespace Personal_Blog_Application.Controllers
 
             var blog = await _context.Blogs.FindAsync(id);
             if (blog == null) return NotFound();
-            if (!CanModify(blog)) return Forbid();
+            if (!CanEdit(blog)) return Forbid();
 
             blog.Title = model.Title;
             blog.Content = model.Content;
@@ -212,7 +213,7 @@ namespace Personal_Blog_Application.Controllers
         {
             var blog = await _context.Blogs.FindAsync(id);
             if (blog == null) return NotFound();
-            if (!CanModify(blog)) return Forbid();
+            if (!CanDelete(blog)) return Forbid();
 
             _context.Blogs.Remove(blog);
             await _context.SaveChangesAsync();
@@ -226,7 +227,14 @@ namespace Personal_Blog_Application.Controllers
             return RedirectToAction(nameof(Mine));
         }
 
-        private bool CanModify(Blog blog)
+        // Editing is owner-only — admins are moderators, not co-authors. They can
+        // still remove offending content via CanDelete below.
+        private bool CanEdit(Blog blog) =>
+            blog.CreatedBy == _userManager.GetUserId(User);
+
+        // Owner OR admin: the owner manages their own content, the admin
+        // moderates everyone else's.
+        private bool CanDelete(Blog blog)
         {
             if (User.IsInRole("ADMIN")) return true;
             return blog.CreatedBy == _userManager.GetUserId(User);

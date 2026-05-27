@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Personal_Blog_Application.Data;
+using Personal_Blog_Application.Filters;
 using Personal_Blog_Application.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,7 +41,11 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("USER", "ADMIN"));
 });
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<PopulateUserNavigationFilter>();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<PopulateUserNavigationFilter>();
+});
 
 var app = builder.Build();
 

@@ -19,5 +19,8 @@ namespace Personal_Blog_Application.ViewModels
         public string Role { get; set; } = "USER";
 
         public bool IsActive { get; set; } = true;
+
+        // Display-only — never bound back from the edit form.
+        public string? AvatarUrl { get; set; }
     }
 }

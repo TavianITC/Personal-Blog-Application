@@ -56,7 +56,8 @@ namespace Personal_Blog_Application.Controllers
                     Email = u.Email ?? string.Empty,
                     Role = roles.FirstOrDefault() ?? "USER",
                     IsActive = u.IsActive,
-                    BlogCount = blogCounts.GetValueOrDefault(u.Id)
+                    BlogCount = blogCounts.GetValueOrDefault(u.Id),
+                    AvatarUrl = u.AvatarUrl
                 });
             }
 
@@ -80,7 +81,8 @@ namespace Personal_Blog_Application.Controllers
                 UserName = user.UserName ?? string.Empty,
                 Email = user.Email ?? string.Empty,
                 Role = roles.FirstOrDefault() ?? "USER",
-                IsActive = user.IsActive
+                IsActive = user.IsActive,
+                AvatarUrl = user.AvatarUrl
             };
 
             ViewBag.IsSelf = user.Id == _userManager.GetUserId(User);
@@ -124,6 +126,7 @@ namespace Personal_Blog_Application.Controllers
             if (!ModelState.IsValid)
             {
                 model.Email = user.Email ?? string.Empty;
+                model.AvatarUrl = user.AvatarUrl;
                 return View(model);
             }
 
@@ -143,6 +146,7 @@ namespace Personal_Blog_Application.Controllers
                 foreach (var err in saveResult.Errors)
                     ModelState.AddModelError(string.Empty, err.Description);
                 model.Email = user.Email ?? string.Empty;
+                model.AvatarUrl = user.AvatarUrl;
                 return View(model);
             }
 
