@@ -54,9 +54,13 @@ namespace Personal_Blog_Application.Controllers
 
             if (!ModelState.IsValid)
             {
-                // Email is read-only in the form, re-hydrate from store before re-render.
+                // Email + AvatarUrl are display-only in the form, re-hydrate from store before re-render.
                 var existing = await _userManager.FindByIdAsync(id);
-                if (existing != null) model.Email = existing.Email ?? string.Empty;
+                if (existing != null)
+                {
+                    model.Email = existing.Email ?? string.Empty;
+                    model.AvatarUrl = existing.AvatarUrl;
+                }
                 return View(model);
             }
 
@@ -74,7 +78,11 @@ namespace Personal_Blog_Application.Controllers
                     ModelState.AddModelError(string.Empty, err);
 
                 var existing = await _userManager.FindByIdAsync(id);
-                if (existing != null) model.Email = existing.Email ?? string.Empty;
+                if (existing != null)
+                {
+                    model.Email = existing.Email ?? string.Empty;
+                    model.AvatarUrl = existing.AvatarUrl;
+                }
                 return View(model);
             }
 

@@ -51,7 +51,8 @@ namespace Personal_Blog_Application.Services.Users
                     Email = u.Email ?? string.Empty,
                     Role = roles.FirstOrDefault() ?? "USER",
                     IsActive = u.IsActive,
-                    BlogCount = blogCounts.GetValueOrDefault(u.Id)
+                    BlogCount = blogCounts.GetValueOrDefault(u.Id),
+                    AvatarUrl = u.AvatarUrl
                 });
             }
             return items;
@@ -73,7 +74,8 @@ namespace Personal_Blog_Application.Services.Users
                 UserName = user.UserName ?? string.Empty,
                 Email = user.Email ?? string.Empty,
                 Role = roles.FirstOrDefault() ?? "USER",
-                IsActive = user.IsActive
+                IsActive = user.IsActive,
+                AvatarUrl = user.AvatarUrl
             });
         }
 
