@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.EntityFrameworkCore;
-using Personal_Blog_Application.Data;
 using Personal_Blog_Application.Models;
+using Personal_Blog_Application.Services.Comments;
+using Personal_Blog_Application.Services.Common;
 using Personal_Blog_Application.ViewModels;
 
 namespace Personal_Blog_Application.Controllers
@@ -15,83 +15,57 @@ namespace Personal_Blog_Application.Controllers
     [Authorize]
     public class CommentsController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly ICommentService _comments;
         private readonly UserManager<User> _userManager;
         private readonly ICompositeViewEngine _viewEngine;
         private readonly ITempDataProvider _tempDataProvider;
 
         public CommentsController(
-            AppDbContext context,
+            ICommentService comments,
             UserManager<User> userManager,
             ICompositeViewEngine viewEngine,
             ITempDataProvider tempDataProvider)
         {
-            _context = context;
+            _comments = comments;
             _userManager = userManager;
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
         }
 
         // POST /comments/create
-        // The form lives inside BlogDetailViewModel, so fields arrive as
-        // NewComment.X — Bind prefix strips the wrapper when binding.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind(Prefix = "NewComment")] CommentCreateViewModel model)
         {
-            var blog = await _context.Blogs.FindAsync(model.BlogId);
-            if (blog == null) return NotFound();
+            var userId = _userManager.GetUserId(User)!;
+            var isAdmin = User.IsInRole("ADMIN");
 
-            if (blog.Status != "PUBLISHED" && !CanModerate(blog))
-                return Forbid();
-
-            model.Content = (model.Content ?? string.Empty).Trim();
-
+            // Surface field errors picked up by data annotations to the AJAX/JSON
+            // caller before the service is even invoked.
             if (!ModelState.IsValid)
-            {
-                if (IsAjax())
-                {
-                    var errors = ModelState.Values
-                        .SelectMany(v => v.Errors)
-                        .Select(e => e.ErrorMessage)
-                        .ToArray();
-                    return new JsonResult(new { ok = false, errors }) { StatusCode = 400 };
-                }
+                return await HandleValidationFailureAsync(model);
 
-                var vm = await BuildDetailViewModelAsync(blog.Id);
-                if (vm == null) return NotFound();
-                vm.NewComment = model;
-                return View("~/Views/Blogs/Detail.cshtml", vm);
+            var result = await _comments.CreateAsync(model, userId, isAdmin);
+            switch (result.Status)
+            {
+                case ResultStatus.NotFound: return NotFound();
+                case ResultStatus.Forbidden: return Forbid();
+                case ResultStatus.ValidationError:
+                    ApplyFieldErrors(result.FieldErrors);
+                    return await HandleValidationFailureAsync(model);
             }
 
-            var comment = new Comment
-            {
-                BlogId = blog.Id,
-                Content = model.Content,
-                CreatedBy = _userManager.GetUserId(User)!,
-                CreatedAt = DateTime.UtcNow
-            };
-            _context.Comments.Add(comment);
-            await _context.SaveChangesAsync();
-
-            // Re-fetch with the User nav property so the partial can render the author
-            // Because when create Comment, only CreatedBy is set, User is not populated until we query it again.
-            // The Blog is not needed because we don't need Blog's data in the partial
-            var saved = await _context.Comments
-                .Include(c => c.User)
-                .FirstAsync(c => c.Id == comment.Id);
-
+            var created = result.Value!;
             if (IsAjax())
             {
-                var html = await RenderPartialAsync("_CommentItem", saved);
-                var count = await _context.Comments.CountAsync(c => c.BlogId == blog.Id);
-                return Json(new { ok = true, html, count });
+                var html = await RenderPartialAsync("_CommentItem", created.Comment);
+                return Json(new { ok = true, html, count = created.CommentCount });
             }
 
             TempData["Success"] = "Comment posted.";
             return RedirectToAction(
                 "Detail", "Blogs",
-                new { id = blog.Id, from = model.From },
+                new { id = created.Comment.BlogId, from = model.From },
                 fragment: "comments");
         }
 
@@ -100,69 +74,55 @@ namespace Personal_Blog_Application.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var comment = await _context.Comments.FindAsync(id);
-            if (comment == null) return NotFound();
+            var userId = _userManager.GetUserId(User)!;
+            var isAdmin = User.IsInRole("ADMIN");
 
-            if (!CanDelete(comment)) return Forbid();
+            var result = await _comments.DeleteAsync(id, userId, isAdmin);
+            if (result.Status == ResultStatus.NotFound) return NotFound();
+            if (result.Status == ResultStatus.Forbidden) return Forbid();
 
-            var blogId = comment.BlogId;
-            _context.Comments.Remove(comment);
-            await _context.SaveChangesAsync();
-
+            var deleted = result.Value!;
             if (IsAjax())
-            {
-                var count = await _context.Comments.CountAsync(c => c.BlogId == blogId);
-                return Json(new { ok = true, count });
-            }
+                return Json(new { ok = true, count = deleted.CommentCount });
 
             TempData["Success"] = "Comment deleted.";
             return RedirectToAction(
                 "Detail", "Blogs",
-                new { id = blogId },
+                new { id = deleted.BlogId },
                 fragment: "comments");
         }
 
         // ── helpers ──────────────────────────────────────────────────
 
-        // Anyone signed in can comment on a PUBLISHED post; for non-PUBLISHED
-        // (DRAFT / PRIVATE) only the owner or ADMIN may comment.
-        private bool CanModerate(Blog blog)
+        private async Task<IActionResult> HandleValidationFailureAsync(CommentCreateViewModel model)
         {
-            if (User.IsInRole("ADMIN")) return true;
-            return blog.CreatedBy == _userManager.GetUserId(User);
+            if (IsAjax())
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToArray();
+                return new JsonResult(new { ok = false, errors }) { StatusCode = 400 };
+            }
+
+            var vm = await _comments.BuildDetailViewModelAsync(model.BlogId);
+            if (vm == null) return NotFound();
+            vm.NewComment = model;
+            return View("~/Views/Blogs/Detail.cshtml", vm);
         }
 
-        // A comment can be deleted by its author OR an ADMIN.
-        private bool CanDelete(Comment comment)
+        private void ApplyFieldErrors(IReadOnlyDictionary<string, string>? fieldErrors)
         {
-            if (User.IsInRole("ADMIN")) return true;
-            return comment.CreatedBy == _userManager.GetUserId(User);
+            if (fieldErrors == null) return;
+            foreach (var (field, message) in fieldErrors)
+                ModelState.AddModelError($"NewComment.{field}", message);
         }
 
         private bool IsAjax() =>
             Request.Headers["X-Requested-With"] == "XMLHttpRequest";
 
-        private async Task<BlogDetailViewModel?> BuildDetailViewModelAsync(int blogId)
-        {
-            var blog = await _context.Blogs
-                .Include(b => b.User)
-                .Include(b => b.Comments).ThenInclude(c => c.User)
-                .AsSplitQuery()
-                .FirstOrDefaultAsync(b => b.Id == blogId);
-
-            if (blog == null) return null;
-
-            return new BlogDetailViewModel
-            {
-                Blog = blog,
-                Comments = blog.Comments.OrderByDescending(c => c.CreatedAt).ToList(),
-                NewComment = new CommentCreateViewModel { BlogId = blogId }
-            };
-        }
-
-        // Renders a partial view to a string. Used to return rendered HTML
-        // in AJAX JSON responses so the same Razor template is the single
-        // source of truth for both server-rendered and AJAX paths.
+        // Renders a partial view to a string so AJAX JSON responses can return
+        // server-rendered HTML — same Razor template, no duplication.
         private async Task<string> RenderPartialAsync<TModel>(string viewName, TModel model)
         {
             var viewResult = _viewEngine.FindView(ControllerContext, viewName, isMainPage: false);

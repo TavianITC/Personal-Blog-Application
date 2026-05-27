@@ -2,6 +2,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Personal_Blog_Application.Data;
 using Personal_Blog_Application.Models;
+using Personal_Blog_Application.Services.Auth;
+using Personal_Blog_Application.Services.Blogs;
+using Personal_Blog_Application.Services.Comments;
+using Personal_Blog_Application.Services.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +43,12 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("UserOnly", policy =>
         policy.RequireRole("USER", "ADMIN"));
 });
+
+// Application services
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IBlogService, BlogService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 
 builder.Services.AddControllersWithViews();
 
