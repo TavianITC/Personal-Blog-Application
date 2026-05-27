@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Personal_Blog_Application.Data;
+using Personal_Blog_Application.Filters;
 using Personal_Blog_Application.Models;
 using Personal_Blog_Application.Services.Auth;
 using Personal_Blog_Application.Services.Blogs;

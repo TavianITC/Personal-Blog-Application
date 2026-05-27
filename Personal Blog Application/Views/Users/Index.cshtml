@@ -75,9 +75,7 @@ else
                     <tr class="border-t border-gray-200 transition hover:bg-gray-50">
                         <td class="px-5 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 font-semibold text-[0.75rem] text-gray-600">
-                                    @ViewHelpers.Initials(u.UserName)
-                                </div>
+                                <partial name="_Avatar" model="@(new Personal_Blog_Application.ViewModels.AvatarRenderViewModel { AvatarUrl = u.AvatarUrl, UserName = u.UserName, SizeClasses = "h-9 w-9", TextSize = "text-[0.75rem]" })" />
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2">
                                         <span class="font-medium text-[0.9rem] text-black">@u.UserName</span>

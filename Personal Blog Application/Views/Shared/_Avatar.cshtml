@@ -1,0 +1,22 @@
+@model Personal_Blog_Application.ViewModels.AvatarRenderViewModel
+
+@*
+    Shared avatar bubble. Renders the user's uploaded avatar if AvatarUrl is set,
+    otherwise falls back to a grey circle with the user's initials.
+
+    Callers control sizing by passing Tailwind utility classes on SizeClasses
+    (must include both width + height, e.g. "h-9 w-9") and TextSize for the
+    initials fallback (e.g. "text-[0.75rem]").
+*@
+
+@if (!string.IsNullOrEmpty(Model.AvatarUrl))
+{
+    <img src="@Model.AvatarUrl" alt="@Model.UserName"
+         class="@Model.SizeClasses flex-shrink-0 rounded-full bg-gray-100 object-cover" />
+}
+else
+{
+    <div class="@Model.SizeClasses flex flex-shrink-0 items-center justify-center rounded-full bg-gray-200 font-semibold @Model.TextSize text-gray-600">
+        @ViewHelpers.Initials(Model.UserName)
+    </div>
+}
