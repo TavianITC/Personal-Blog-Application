@@ -4,20 +4,23 @@
     ViewData["Title"] = "Posts";
 
     var isAdmin = User.IsInRole("ADMIN");
-    var filterTitle = ViewBag.FilterTitle as string;
+    var filterSearch = ViewBag.FilterSearch as string;
     var filterAuthor = ViewBag.FilterAuthor as string;
     var filterSort = ViewBag.FilterSort as string;
-    var hasFilters = !string.IsNullOrWhiteSpace(filterTitle)
+    var filterPriority = ViewBag.FilterPriority as int?;
+    var hasFilters = !string.IsNullOrWhiteSpace(filterSearch)
                   || !string.IsNullOrWhiteSpace(filterAuthor)
-                  || !string.IsNullOrWhiteSpace(filterSort);
+                  || !string.IsNullOrWhiteSpace(filterSort)
+                  || filterPriority.HasValue;
 
     // Build query template so PagedListPager keeps the current filter set
     // on every page link.
     Func<int, string> pageUrl = p =>
         Url.Action("Index", new {
-            title = filterTitle,
+            search = filterSearch,
             author = filterAuthor,
             sort = filterSort,
+            priority = filterPriority,
             page = p
         })!;
 }
@@ -72,10 +75,18 @@
 
 <!-- Filter bar -->
 <form method="get" id="filter-form" class="mb-6 flex flex-wrap items-center gap-2">
-    <input type="text" name="title" value="@filterTitle" placeholder="Search title…"
-           class="h-[38px] flex-[1_1_200px] min-w-[200px] rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+    <input type="text" name="search" value="@filterSearch" placeholder="Search title or content…"
+           class="h-[38px] flex-[1_1_240px] min-w-[240px] rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
     <input type="text" name="author" value="@filterAuthor" placeholder="Author…"
-           class="h-[38px] flex-[1_1_200px] min-w-[200px] rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+           class="h-[38px] flex-[1_1_160px] min-w-[160px] rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+    <select name="priority"
+            class="h-[38px] min-w-[160px] cursor-pointer rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition focus:border-black focus:bg-white">
+        <option value="" selected="@(!filterPriority.HasValue)">Any priority</option>
+        @for (var p = 5; p >= 1; p--)
+        {
+            <option value="@p" selected="@(filterPriority == p)">Priority P@(p)</option>
+        }
+    </select>
     <select name="sort"
             class="h-[38px] min-w-[200px] cursor-pointer rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition focus:border-black focus:bg-white">
         <option value="" selected="@(string.IsNullOrEmpty(filterSort))">Sort: Newest</option>

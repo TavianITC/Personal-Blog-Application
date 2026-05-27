@@ -8,12 +8,12 @@ namespace Personal_Blog_Application.Services.Blogs
     public interface IBlogService
     {
         Task<IPagedList<Blog>> GetFeedAsync(
-            string? title, string? author, string? sort,
+            string? search, string? author, string? sort, int? priority,
             string userId, bool isAdmin,
             int page = 1, int pageSize = PaginationDefaults.PageSize);
 
         Task<IPagedList<Blog>> GetMineAsync(
-            string? title, string? sort, string? status,
+            string? search, string? sort, string? status, int? priority,
             string userId,
             int page = 1, int pageSize = PaginationDefaults.PageSize);
 
