@@ -1184,6 +1184,10 @@ html,
   min-width: 280px;
 }
 
+.min-w-\[240px\] {
+  min-width: 240px;
+}
+
 .max-w-2xl {
   max-width: 42rem;
 }
@@ -1230,6 +1234,14 @@ html,
 
 .flex-\[1_1_280px\] {
   flex: 1 1 280px;
+}
+
+.flex-\[1_1_160px\] {
+  flex: 1 1 160px;
+}
+
+.flex-\[1_1_240px\] {
+  flex: 1 1 240px;
 }
 
 .flex-shrink-0 {

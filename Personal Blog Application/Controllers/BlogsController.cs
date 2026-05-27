@@ -20,30 +20,42 @@ namespace Personal_Blog_Application.Controllers
             _userManager = userManager;
         }
 
-        // GET /blogs?title=&author=&sort=&page=
-        public async Task<IActionResult> Index(string? title, string? author, string? sort, int page = 1)
+        // GET /blogs?search=&author=&sort=&priority=&page=
+        public async Task<IActionResult> Index(
+            [FromQuery] string? search,
+            [FromQuery] string? author,
+            [FromQuery] string? sort,
+            [FromQuery] int? priority,
+            [FromQuery] int page = 1)
         {
             var userId = _userManager.GetUserId(User)!;
             var isAdmin = User.IsInRole("ADMIN");
 
-            var blogs = await _blogs.GetFeedAsync(title, author, sort, userId, isAdmin, page);
+            var blogs = await _blogs.GetFeedAsync(search, author, sort, priority, userId, isAdmin, page);
 
-            ViewBag.FilterTitle = title;
+            ViewBag.FilterSearch = search;
             ViewBag.FilterAuthor = author;
             ViewBag.FilterSort = sort;
+            ViewBag.FilterPriority = priority;
             return View(blogs);
         }
 
-        // GET /blogs/mine?title=&status=&sort=&page=
-        public async Task<IActionResult> Mine(string? title, string? sort, string? status, int page = 1)
+        // GET /blogs/mine?search=&status=&sort=&priority=&page=
+        public async Task<IActionResult> Mine(
+            [FromQuery] string? search,
+            [FromQuery] string? sort,
+            [FromQuery] string? status,
+            [FromQuery] int? priority,
+            [FromQuery] int page = 1)
         {
             var userId = _userManager.GetUserId(User)!;
-            var blogs = await _blogs.GetMineAsync(title, sort, status, userId, page);
+            var blogs = await _blogs.GetMineAsync(search, sort, status, priority, userId, page);
             var counts = await _blogs.GetMyStatusCountsAsync(userId);
 
-            ViewBag.FilterTitle = title;
+            ViewBag.FilterSearch = search;
             ViewBag.FilterSort = sort;
             ViewBag.FilterStatus = status;
+            ViewBag.FilterPriority = priority;
             ViewBag.StatusCounts = counts;
             return View(blogs);
         }

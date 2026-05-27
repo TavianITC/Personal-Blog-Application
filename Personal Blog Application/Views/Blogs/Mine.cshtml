@@ -3,14 +3,16 @@
 @{
     ViewData["Title"] = "My Blogs";
 
-    var filterTitle = ViewBag.FilterTitle as string;
+    var filterSearch = ViewBag.FilterSearch as string;
     var filterSort = ViewBag.FilterSort as string;
     var filterStatus = ViewBag.FilterStatus as string;
+    var filterPriority = ViewBag.FilterPriority as int?;
     var counts = ViewBag.StatusCounts as IDictionary<string, int>
                  ?? new Dictionary<string, int>();
-    var hasFilters = !string.IsNullOrWhiteSpace(filterTitle)
+    var hasFilters = !string.IsNullOrWhiteSpace(filterSearch)
                   || !string.IsNullOrWhiteSpace(filterSort)
-                  || !string.IsNullOrWhiteSpace(filterStatus);
+                  || !string.IsNullOrWhiteSpace(filterStatus)
+                  || filterPriority.HasValue;
 
     int CountFor(string key) => counts.TryGetValue(key, out var v) ? v : 0;
     int totalAll = counts.Values.Sum();
@@ -34,9 +36,10 @@
 
     Func<int, string> pageUrl = p =>
         Url.Action("Mine", new {
-            title = filterTitle,
+            search = filterSearch,
             sort = filterSort,
             status = filterStatus,
+            priority = filterPriority,
             page = p
         })!;
 }
@@ -74,8 +77,9 @@
                        || t.Key == filterStatus;
         <a asp-action="Mine"
            asp-route-status="@(string.IsNullOrEmpty(t.Key) ? null : t.Key)"
-           asp-route-title="@filterTitle"
+           asp-route-search="@filterSearch"
            asp-route-sort="@filterSort"
+           asp-route-priority="@filterPriority"
            class="relative inline-flex items-center gap-2 px-5 py-[0.85rem] font-sans text-sm no-underline transition @(isActive ? "text-black font-medium after:absolute after:left-0 after:right-0 after:-bottom-px after:h-[2px] after:bg-black" : "text-gray-600 hover:text-black")">
             @t.Label
             <span class="inline-flex h-5 min-w-[22px] items-center justify-center rounded-full px-[0.45rem] font-medium text-[0.7rem] @(isActive ? "bg-black text-white" : "bg-gray-100 text-gray-600")">@t.Count</span>
@@ -86,8 +90,16 @@
 <!-- Filter bar -->
 <form method="get" id="filter-form" class="mb-6 flex flex-wrap items-center gap-2">
     <input type="hidden" name="status" value="@filterStatus" />
-    <input type="text" name="title" value="@filterTitle" placeholder="Search title…"
-           class="h-[38px] flex-[1_1_200px] min-w-[200px] rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+    <input type="text" name="search" value="@filterSearch" placeholder="Search title or content…"
+           class="h-[38px] flex-[1_1_240px] min-w-[240px] rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
+    <select name="priority"
+            class="h-[38px] min-w-[160px] cursor-pointer rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition focus:border-black focus:bg-white">
+        <option value="" selected="@(!filterPriority.HasValue)">Any priority</option>
+        @for (var p = 5; p >= 1; p--)
+        {
+            <option value="@p" selected="@(filterPriority == p)">Priority P@(p)</option>
+        }
+    </select>
     <select name="sort"
             class="h-[38px] min-w-[200px] cursor-pointer rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition focus:border-black focus:bg-white">
         <option value="" selected="@(string.IsNullOrEmpty(filterSort))">Sort: Newest</option>

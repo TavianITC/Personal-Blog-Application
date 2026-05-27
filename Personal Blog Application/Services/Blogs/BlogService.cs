@@ -18,7 +18,7 @@ namespace Personal_Blog_Application.Services.Blogs
         }
 
         public async Task<IPagedList<Blog>> GetFeedAsync(
-            string? title, string? author, string? sort,
+            string? search, string? author, string? sort, int? priority,
             string userId, bool isAdmin,
             int page = 1, int pageSize = PaginationDefaults.PageSize)
         {
@@ -30,18 +30,22 @@ namespace Personal_Blog_Application.Services.Blogs
             if (!isAdmin)
                 query = query.Where(b => b.Status == "PUBLISHED");
 
-            if (!string.IsNullOrWhiteSpace(title))
-                query = query.Where(b => b.Title.Contains(title));
+            query = ApplySearch(query, search);
+            query = ApplyPriority(query, priority);
 
             if (!string.IsNullOrWhiteSpace(author))
-                query = query.Where(b => b.User.UserName!.Contains(author));
+            {
+                var authorPattern = $"%{author.Trim()}%";
+                query = query.Where(b =>
+                    b.User.UserName != null && EF.Functions.Like(b.User.UserName, authorPattern));
+            }
 
             query = ApplySort(query, sort);
             return await query.ToPagedListAsync(NormalizePage(page), pageSize);
         }
 
         public async Task<IPagedList<Blog>> GetMineAsync(
-            string? title, string? sort, string? status,
+            string? search, string? sort, string? status, int? priority,
             string userId,
             int page = 1, int pageSize = PaginationDefaults.PageSize)
         {
@@ -54,11 +58,25 @@ namespace Personal_Blog_Application.Services.Blogs
             if (IsValidStatus(status))
                 query = query.Where(b => b.Status == status);
 
-            if (!string.IsNullOrWhiteSpace(title))
-                query = query.Where(b => b.Title.Contains(title));
-
+            query = ApplySearch(query, search);
+            query = ApplyPriority(query, priority);
             query = ApplySort(query, sort);
             return await query.ToPagedListAsync(NormalizePage(page), pageSize);
+        }
+        private static IQueryable<Blog> ApplySearch(IQueryable<Blog> query, string? search)
+        {
+            if (string.IsNullOrWhiteSpace(search)) return query;
+            var pattern = $"%{search.Trim()}%";
+            return query.Where(b =>
+                EF.Functions.Like(b.Title, pattern) ||
+                EF.Functions.Like(b.Content, pattern));
+        }
+
+        private static IQueryable<Blog> ApplyPriority(IQueryable<Blog> query, int? priority)
+        {
+            if (priority is null) return query;
+            if (priority < 1 || priority > 5) return query;
+            return query.Where(b => b.Priority == priority.Value);
         }
 
         public async Task<IDictionary<string, int>> GetMyStatusCountsAsync(string userId)
