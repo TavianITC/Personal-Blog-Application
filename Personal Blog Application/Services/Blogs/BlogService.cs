@@ -3,6 +3,8 @@ using Personal_Blog_Application.Data;
 using Personal_Blog_Application.Models;
 using Personal_Blog_Application.Services.Common;
 using Personal_Blog_Application.ViewModels;
+using X.PagedList;
+using X.PagedList.EF;
 
 namespace Personal_Blog_Application.Services.Blogs
 {
@@ -15,8 +17,10 @@ namespace Personal_Blog_Application.Services.Blogs
             _context = context;
         }
 
-        public async Task<IReadOnlyList<Blog>> GetFeedAsync(
-            string? title, string? author, string? sort, string userId, bool isAdmin)
+        public async Task<IPagedList<Blog>> GetFeedAsync(
+            string? title, string? author, string? sort,
+            string userId, bool isAdmin,
+            int page = 1, int pageSize = IBlogService.DefaultPageSize)
         {
             IQueryable<Blog> query = _context.Blogs
                 .Include(b => b.User)
@@ -33,11 +37,13 @@ namespace Personal_Blog_Application.Services.Blogs
                 query = query.Where(b => b.User.UserName!.Contains(author));
 
             query = ApplySort(query, sort);
-            return await query.ToListAsync();
+            return await query.ToPagedListAsync(NormalizePage(page), pageSize);
         }
 
-        public async Task<IReadOnlyList<Blog>> GetMineAsync(
-            string? title, string? author, string? sort, string userId)
+        public async Task<IPagedList<Blog>> GetMineAsync(
+            string? title, string? sort, string? status,
+            string userId,
+            int page = 1, int pageSize = IBlogService.DefaultPageSize)
         {
             IQueryable<Blog> query = _context.Blogs
                 .Include(b => b.User)
@@ -45,14 +51,28 @@ namespace Personal_Blog_Application.Services.Blogs
                 .AsSplitQuery()
                 .Where(b => b.CreatedBy == userId);
 
+            if (IsValidStatus(status))
+                query = query.Where(b => b.Status == status);
+
             if (!string.IsNullOrWhiteSpace(title))
                 query = query.Where(b => b.Title.Contains(title));
 
-            if (!string.IsNullOrWhiteSpace(author))
-                query = query.Where(b => b.User.UserName!.Contains(author));
-
             query = ApplySort(query, sort);
-            return await query.ToListAsync();
+            return await query.ToPagedListAsync(NormalizePage(page), pageSize);
+        }
+
+        public async Task<IDictionary<string, int>> GetMyStatusCountsAsync(string userId)
+        {
+            var counts = await _context.Blogs
+                .Where(b => b.CreatedBy == userId)
+                .GroupBy(b => b.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Status, x => x.Count);
+
+            // Ensure all three keys are present so the view doesn't need null checks.
+            foreach (var key in new[] { "PUBLISHED", "PRIVATE", "DRAFT" })
+                counts.TryAdd(key, 0);
+            return counts;
         }
 
         public async Task<IReadOnlyList<Blog>> GetHomeFeedAsync(string userId, int take = 20)
@@ -68,11 +88,11 @@ namespace Personal_Blog_Application.Services.Blogs
         }
 
         public async Task<OperationResult<BlogDetailViewModel>> GetDetailAsync(
-            int id, string userId, bool isAdmin, string? from)
+            int id, string userId, bool isAdmin, string? from,
+            int commentPage = 1, int commentPageSize = IBlogService.DefaultCommentPageSize)
         {
             var blog = await _context.Blogs
                 .Include(b => b.User)
-                .Include(b => b.Comments).ThenInclude(c => c.User)
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(b => b.Id == id);
 
@@ -82,10 +102,18 @@ namespace Personal_Blog_Application.Services.Blogs
             if (blog.Status != "PUBLISHED" && !CanModify(blog, userId, isAdmin))
                 return OperationResult<BlogDetailViewModel>.Forbidden();
 
+            // Paginate comments at the DB so we don't materialize the entire history
+            // when a popular post has many comments.
+            var pagedComments = await _context.Comments
+                .Include(c => c.User)
+                .Where(c => c.BlogId == id)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToPagedListAsync(NormalizePage(commentPage), commentPageSize);
+
             var vm = new BlogDetailViewModel
             {
                 Blog = blog,
-                Comments = blog.Comments.OrderByDescending(c => c.CreatedAt).ToList(),
+                Comments = pagedComments,
                 NewComment = new CommentCreateViewModel
                 {
                     BlogId = id,
@@ -171,5 +199,12 @@ namespace Personal_Blog_Application.Services.Blogs
 
         private static bool CanModify(Blog blog, string userId, bool isAdmin) =>
             isAdmin || blog.CreatedBy == userId;
+
+        private static bool IsValidStatus(string? status) =>
+            status is "DRAFT" or "PUBLISHED" or "PRIVATE";
+
+        // X.PagedList throws on page <= 0; clamp here so callers can pass query
+        // params straight through without defensive checks.
+        private static int NormalizePage(int page) => page < 1 ? 1 : page;
     }
 }

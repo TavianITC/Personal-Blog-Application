@@ -1,8 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Personal_Blog_Application.Data;
 using Personal_Blog_Application.Models;
+using Personal_Blog_Application.Services.Blogs;
 using Personal_Blog_Application.Services.Common;
 using Personal_Blog_Application.ViewModels;
+using X.PagedList;
+using X.PagedList.EF;
 
 namespace Personal_Blog_Application.Services.Comments
 {
@@ -69,16 +72,22 @@ namespace Personal_Blog_Application.Services.Comments
         {
             var blog = await _context.Blogs
                 .Include(b => b.User)
-                .Include(b => b.Comments).ThenInclude(c => c.User)
-                .AsSplitQuery()
                 .FirstOrDefaultAsync(b => b.Id == blogId);
 
             if (blog == null) return null;
 
+            // Validation re-render always shows page 1 — the user just submitted a
+            // comment and is looking at the form, not paging through history.
+            var pagedComments = await _context.Comments
+                .Include(c => c.User)
+                .Where(c => c.BlogId == blogId)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToPagedListAsync(1, IBlogService.DefaultCommentPageSize);
+
             return new BlogDetailViewModel
             {
                 Blog = blog,
-                Comments = blog.Comments.OrderByDescending(c => c.CreatedAt).ToList(),
+                Comments = pagedComments,
                 NewComment = new CommentCreateViewModel { BlogId = blogId }
             };
         }

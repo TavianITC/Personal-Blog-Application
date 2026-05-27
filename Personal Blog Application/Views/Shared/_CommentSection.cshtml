@@ -1,11 +1,20 @@
 ﻿@model Personal_Blog_Application.ViewModels.BlogDetailViewModel
 
+@{
+    Func<int, string> commentPageUrl = p =>
+        Url.Action("Detail", "Blogs", new { id = Model.Blog.Id, commentPage = p })! + "#comments";
+}
+
 <section id="comments" class="mt-12"
          data-comments-create-url="@Url.Action("Create", "Comments")"
          data-comments-delete-base="@Url.Action("Delete", "Comments")">
     <h2 class="font-display mb-6 tracking-tight text-[1.4rem] text-black">
-        <span>Comment@(Model.Comments.Count != 1 ? "s" : "")</span>
-        <span>(<span id="comments-count-num">@Model.Comments.Count</span>)</span>
+        <span>Comment@(Model.Comments.TotalItemCount != 1 ? "s" : "")</span>
+        <span>(<span id="comments-count-num">@Model.Comments.TotalItemCount</span>)</span>
+        @if (Model.Comments.PageCount > 1)
+        {
+            <span class="ml-2 text-[0.85rem] text-gray-400 font-sans">· page @Model.Comments.PageNumber of @Model.Comments.PageCount</span>
+        }
     </h2>
 
     <!-- Comment form -->
@@ -44,6 +53,26 @@
             <partial name="_CommentItem" model="c" />
         }
     </div>
+
+    @if (Model.Comments.PageCount > 1)
+    {
+        <nav class="app-pager mt-8 flex justify-center" aria-label="Comments pagination">
+            @Html.PagedListPager(Model.Comments, commentPageUrl, new PagedListRenderOptions
+            {
+                DisplayLinkToFirstPage = PagedListDisplayMode.IfNeeded,
+                DisplayLinkToLastPage = PagedListDisplayMode.IfNeeded,
+                DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+                DisplayLinkToNextPage = PagedListDisplayMode.Always,
+                DisplayLinkToIndividualPages = true,
+                MaximumPageNumbersToDisplay = 7,
+                EllipsesFormat = "&hellip;",
+                LinkToPreviousPageFormat = "‹",
+                LinkToNextPageFormat = "›",
+                LinkToFirstPageFormat = "«",
+                LinkToLastPageFormat = "»"
+            })
+        </nav>
+    }
 </section>
 
 <!-- Delete confirmation modal (shared, configured per click) -->

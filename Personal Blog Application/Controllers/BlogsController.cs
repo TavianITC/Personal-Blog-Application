@@ -20,13 +20,13 @@ namespace Personal_Blog_Application.Controllers
             _userManager = userManager;
         }
 
-        // GET /blogs?title=&author=&sort=
-        public async Task<IActionResult> Index(string? title, string? author, string? sort)
+        // GET /blogs?title=&author=&sort=&page=
+        public async Task<IActionResult> Index(string? title, string? author, string? sort, int page = 1)
         {
             var userId = _userManager.GetUserId(User)!;
             var isAdmin = User.IsInRole("ADMIN");
 
-            var blogs = await _blogs.GetFeedAsync(title, author, sort, userId, isAdmin);
+            var blogs = await _blogs.GetFeedAsync(title, author, sort, userId, isAdmin, page);
 
             ViewBag.FilterTitle = title;
             ViewBag.FilterAuthor = author;
@@ -34,26 +34,28 @@ namespace Personal_Blog_Application.Controllers
             return View(blogs);
         }
 
-        // GET /blogs/mine?title=&author=&sort=
-        public async Task<IActionResult> Mine(string? title, string? author, string? sort)
+        // GET /blogs/mine?title=&status=&sort=&page=
+        public async Task<IActionResult> Mine(string? title, string? sort, string? status, int page = 1)
         {
             var userId = _userManager.GetUserId(User)!;
-            var blogs = await _blogs.GetMineAsync(title, author, sort, userId);
+            var blogs = await _blogs.GetMineAsync(title, sort, status, userId, page);
+            var counts = await _blogs.GetMyStatusCountsAsync(userId);
 
             ViewBag.FilterTitle = title;
-            ViewBag.FilterAuthor = author;
             ViewBag.FilterSort = sort;
+            ViewBag.FilterStatus = status;
+            ViewBag.StatusCounts = counts;
             return View(blogs);
         }
 
-        // GET /blogs/detail/5
-        public async Task<IActionResult> Detail(int id)
+        // GET /blogs/detail/5?commentPage=
+        public async Task<IActionResult> Detail(int id, int commentPage = 1)
         {
             var userId = _userManager.GetUserId(User)!;
             var isAdmin = User.IsInRole("ADMIN");
             var from = Request.Query["from"].ToString();
 
-            var result = await _blogs.GetDetailAsync(id, userId, isAdmin, from);
+            var result = await _blogs.GetDetailAsync(id, userId, isAdmin, from, commentPage);
             return result.Status switch
             {
                 ResultStatus.NotFound => NotFound(),

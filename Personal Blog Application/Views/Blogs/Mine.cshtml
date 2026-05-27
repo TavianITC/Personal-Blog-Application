@@ -1,14 +1,26 @@
-﻿@model List<Personal_Blog_Application.Models.Blog>
+@model IPagedList<Personal_Blog_Application.Models.Blog>
 
 @{
     ViewData["Title"] = "My Blogs";
-    var isAdmin = User.IsInRole("ADMIN");
 
-    var groups = new (string Key, string Label, List<Personal_Blog_Application.Models.Blog> Items)[]
+    var filterTitle = ViewBag.FilterTitle as string;
+    var filterSort = ViewBag.FilterSort as string;
+    var filterStatus = ViewBag.FilterStatus as string;
+    var counts = ViewBag.StatusCounts as IDictionary<string, int>
+                 ?? new Dictionary<string, int>();
+    var hasFilters = !string.IsNullOrWhiteSpace(filterTitle)
+                  || !string.IsNullOrWhiteSpace(filterSort)
+                  || !string.IsNullOrWhiteSpace(filterStatus);
+
+    int CountFor(string key) => counts.TryGetValue(key, out var v) ? v : 0;
+    int totalAll = counts.Values.Sum();
+
+    var tabs = new (string Key, string Label, int Count)[]
     {
-        ("PUBLISHED", "Published", Model.Where(b => b.Status == "PUBLISHED").ToList()),
-        ("PRIVATE",   "Private",   Model.Where(b => b.Status == "PRIVATE").ToList()),
-        ("DRAFT",     "Drafts",    Model.Where(b => b.Status == "DRAFT").ToList())
+        ("",          "All",       totalAll),
+        ("PUBLISHED", "Published", CountFor("PUBLISHED")),
+        ("PRIVATE",   "Private",   CountFor("PRIVATE")),
+        ("DRAFT",     "Drafts",    CountFor("DRAFT")),
     };
 
     string PriorityBadgeColors(int p) => p switch
@@ -19,24 +31,17 @@
         2 => "bg-gray-100 text-gray-600",
         _ => "bg-gray-50 text-gray-400"
     };
+
+    Func<int, string> pageUrl = p =>
+        Url.Action("Mine", new {
+            title = filterTitle,
+            sort = filterSort,
+            status = filterStatus,
+            page = p
+        })!;
 }
 
 <style>
-    /* Hover-reveal action buttons + expandable label — non-trivial to express
-       purely with utilities (active-tab underline pseudo, group-hover expand
-       on a child width). Keep these tiny classes here. */
-    .tab-btn.active { color: #0a0a0a; font-weight: 500; }
-    .tab-btn.active::after {
-        content: '';
-        position: absolute;
-        left: 0; right: 0; bottom: -1px;
-        height: 2px;
-        background: #0a0a0a;
-    }
-    .tab-btn.active .tab-count { background: #0a0a0a; color: #fff; }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
     .blog-actions { opacity: 0; transition: opacity 0.18s ease; }
     .blog-card-mine:hover .blog-actions,
     .blog-card-mine:focus-within .blog-actions { opacity: 1; }
@@ -50,25 +55,40 @@
     <div>
         <h1 class="font-display tracking-[-0.03em] mb-1 text-[2rem]">My Posts</h1>
         <p class="m-0 text-sm text-gray-600">
-            @Model.Count post@(Model.Count != 1 ? "s" : "") total
+            @Model.TotalItemCount post@(Model.TotalItemCount != 1 ? "s" : "") @(hasFilters ? "match" : "in this view")
+            @if (Model.PageCount > 1)
+            {
+                <span class="ml-1 text-gray-400">· page @Model.PageNumber of @Model.PageCount</span>
+            }
         </p>
     </div>
     <a asp-action="Create"
        class="h-[42px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-black px-5 font-sans text-sm font-medium leading-none text-white no-underline transition hover:shadow-btn-primary-hover hover:-translate-y-px hover:opacity-90 active:translate-y-0">+ New post</a>
 </div>
 
-@{
-    var filterTitle = ViewBag.FilterTitle as string;
-    var filterSort = ViewBag.FilterSort as string;
-    var hasFilters = !string.IsNullOrWhiteSpace(filterTitle)
-                  || !string.IsNullOrWhiteSpace(filterSort);
-}
+<!-- Status tabs: server-side filter so pagination works inside each bucket. -->
+<div class="mb-6 flex border-b border-gray-200" role="tablist">
+    @foreach (var t in tabs)
+    {
+        var isActive = (string.IsNullOrEmpty(t.Key) && string.IsNullOrEmpty(filterStatus))
+                       || t.Key == filterStatus;
+        <a asp-action="Mine"
+           asp-route-status="@(string.IsNullOrEmpty(t.Key) ? null : t.Key)"
+           asp-route-title="@filterTitle"
+           asp-route-sort="@filterSort"
+           class="relative inline-flex items-center gap-2 px-5 py-[0.85rem] font-sans text-sm no-underline transition @(isActive ? "text-black font-medium after:absolute after:left-0 after:right-0 after:-bottom-px after:h-[2px] after:bg-black" : "text-gray-600 hover:text-black")">
+            @t.Label
+            <span class="inline-flex h-5 min-w-[22px] items-center justify-center rounded-full px-[0.45rem] font-medium text-[0.7rem] @(isActive ? "bg-black text-white" : "bg-gray-100 text-gray-600")">@t.Count</span>
+        </a>
+    }
+</div>
 
 <!-- Filter bar -->
 <form method="get" id="filter-form" class="mb-6 flex flex-wrap items-center gap-2">
+    <input type="hidden" name="status" value="@filterStatus" />
     <input type="text" name="title" value="@filterTitle" placeholder="Search title…"
            class="h-[38px] flex-[1_1_200px] min-w-[200px] rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white" />
-        <select name="sort"
+    <select name="sort"
             class="h-[38px] min-w-[200px] cursor-pointer rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.85rem] text-black outline-none transition focus:border-black focus:bg-white">
         <option value="" selected="@(string.IsNullOrEmpty(filterSort))">Sort: Newest</option>
         <option value="priority_desc" selected="@(filterSort == "priority_desc" || filterSort == "priority")">Sort: Priority — High to low</option>
@@ -106,144 +126,120 @@
 }
 else
 {
-    <!-- Tabs -->
-    <div class="mb-8 flex border-b border-gray-200" role="tablist">
-        @for (var i = 0; i < groups.Length; i++)
+    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        @foreach (var blog in Model)
         {
-            var g = groups[i];
-            <button type="button"
-                    class="tab-btn @(i == 0 ? "active" : "") relative inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent px-5 py-[0.85rem] font-sans text-sm text-gray-600 transition hover:text-black"
-                    data-tab="@g.Key" role="tab">
-                @g.Label
-                <span class="tab-count inline-flex h-5 min-w-[22px] items-center justify-center rounded-full bg-gray-100 px-[0.45rem] font-medium text-[0.7rem] text-gray-600">@g.Items.Count</span>
-            </button>
+            var authorName = blog.User?.UserName ?? "Unknown";
+            <article class="blog-card-mine relative flex flex-col rounded-md border border-gray-200 bg-white p-7 transition hover:-translate-y-0.5 hover:border-gray-400">
+                <div class="mb-4 flex items-center gap-[0.6rem]">
+                    <partial name="_Avatar" model="@(new Personal_Blog_Application.ViewModels.AvatarRenderViewModel { AvatarUrl = blog.User?.AvatarUrl, UserName = authorName, SizeClasses = "h-8 w-8" })" />
+                    <span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[0.775rem] text-gray-600">
+                        <strong class="font-medium text-black">@authorName</strong>
+                        <span class="mx-[0.35rem] text-gray-400">·</span>
+                        @ViewHelpers.RelativeTime(blog.CreatedAt)
+                    </span>
+                    @if (blog.Status == "DRAFT")
+                    {
+                        <span class="inline-flex flex-shrink-0 items-center gap-[0.3rem] rounded-full bg-draft-bg px-[0.55rem] py-[0.2rem] font-medium text-[0.7rem] text-draft-text">Draft</span>
+                    }
+                    else if (blog.Status == "PRIVATE")
+                    {
+                        <span class="inline-flex flex-shrink-0 items-center gap-[0.3rem] rounded-full bg-private-bg px-[0.55rem] py-[0.2rem] font-medium text-[0.7rem] text-private-text">Private</span>
+                    }
+                    else if (blog.Status == "PUBLISHED")
+                    {
+                        <span class="inline-flex flex-shrink-0 items-center gap-[0.3rem] rounded-full bg-published-bg px-[0.55rem] py-[0.2rem] font-medium text-[0.7rem] text-published-text">Published</span>
+                    }
+                    @if (blog.Comments.Count > 0)
+                    {
+                        <span class="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-gray-100 px-2 py-1 font-medium text-[0.7rem] text-gray-600" title="@blog.Comments.Count comment@(blog.Comments.Count != 1 ? "s" : "")">
+                            <svg class="h-3 w-3 fill-none stroke-current" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                            </svg>
+                            @blog.Comments.Count
+                        </span>
+                    }
+                    <span class="inline-flex flex-shrink-0 items-center rounded-full px-[0.6rem] py-1 font-medium text-[0.7rem] @PriorityBadgeColors(blog.Priority)">P@(blog.Priority)</span>
+                </div>
+
+                <a asp-action="Detail" asp-route-id="@blog.Id" asp-route-from="mine"
+                   class="font-display mb-[0.6rem] block leading-tight tracking-tight text-[1.25rem] text-black no-underline hover:text-black hover:no-underline"
+                   title="@blog.Title">
+                    @blog.Title
+                </a>
+
+                <p class="leading-[1.65] mb-0 flex-1 overflow-hidden text-sm text-gray-600 [display:-webkit-box] [-webkit-line-clamp:3] [-webkit-box-orient:vertical]">@ViewHelpers.Excerpt(blog.Content)</p>
+
+                <div class="blog-actions absolute bottom-3 right-3 flex items-center gap-1">
+                    @if (blog.Status == "DRAFT")
+                    {
+                        <a asp-action="Edit" asp-route-id="@blog.Id"
+                           class="blog-action h-[30px] inline-flex items-center rounded bg-white px-[0.4rem] text-[0.75rem] text-black no-underline transition hover:bg-gray-100"
+                           aria-label="Continue writing" title="Continue writing">
+                            <svg class="h-[14px] w-[14px] flex-shrink-0 fill-none stroke-current" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                            </svg>
+                            <span class="label">Continue</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-action="Detail" asp-route-id="@blog.Id" asp-route-from="mine"
+                           class="blog-action h-[30px] inline-flex items-center rounded bg-white px-[0.4rem] text-[0.75rem] text-black no-underline transition hover:bg-gray-100"
+                           aria-label="View" title="View">
+                            <svg class="h-[14px] w-[14px] flex-shrink-0 fill-none stroke-current" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <span class="label">View</span>
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@blog.Id"
+                           class="blog-action h-[30px] inline-flex items-center rounded bg-white px-[0.4rem] text-[0.75rem] text-gray-600 no-underline transition hover:bg-gray-100 hover:text-black"
+                           aria-label="Edit" title="Edit">
+                            <svg class="h-[14px] w-[14px] flex-shrink-0 fill-none stroke-current" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                            </svg>
+                            <span class="label">Edit</span>
+                        </a>
+                    }
+                    <button type="button"
+                            class="blog-action js-delete h-[30px] font-[inherit] inline-flex cursor-pointer items-center rounded border-0 bg-white px-[0.4rem] text-[0.75rem] text-gray-600 transition hover:bg-danger-bg hover:text-error"
+                            data-id="@blog.Id"
+                            data-title="@blog.Title"
+                            aria-label="Delete" title="Delete">
+                        <svg class="h-[14px] w-[14px] flex-shrink-0 fill-none stroke-current" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                            <path d="M9 6V4a2 2 0 012-2h2a2 2 0 012 2v2" />
+                        </svg>
+                        <span class="label">Delete</span>
+                    </button>
+                </div>
+            </article>
         }
     </div>
 
-    <!-- Panels -->
-    @for (var i = 0; i < groups.Length; i++)
+    @if (Model.PageCount > 1)
     {
-        var g = groups[i];
-        <div class="tab-panel @(i == 0 ? "active" : "")" data-panel="@g.Key">
-            @if (!g.Items.Any())
+        <nav class="app-pager mt-10 flex justify-center" aria-label="Page navigation">
+            @Html.PagedListPager(Model, pageUrl, new PagedListRenderOptions
             {
-                <div class="py-16 text-center text-gray-400">
-                    <p class="font-display mb-2 text-xl tracking-tight text-gray-600">No @g.Label.ToLower() posts</p>
-                    <p class="text-sm">
-                        @switch (g.Key)
-                        {
-                            case "DRAFT":
-                                <text>Drafts you save will show up here so you can keep writing.</text>
-                                break;
-                            case "PRIVATE":
-                                <text>Posts marked as private will appear here. Only you can see them.</text>
-                                break;
-                            default:
-                                <text>Publish a post to share it with everyone.</text>
-                                break;
-                        }
-                    </p>
-                </div>
-            }
-            else
-            {
-                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                    @foreach (var blog in g.Items)
-                    {
-                        var authorName = blog.User?.UserName ?? "Unknown";
-                        <article class="blog-card-mine relative flex flex-col rounded-md border border-gray-200 bg-white p-7 transition hover:-translate-y-0.5 hover:border-gray-400">
-                            <div class="mb-4 flex items-center gap-[0.6rem]">
-                                <partial name="_Avatar" model="@(new Personal_Blog_Application.ViewModels.AvatarRenderViewModel { AvatarUrl = blog.User?.AvatarUrl, UserName = authorName, SizeClasses = "h-8 w-8" })" />
-                                <span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[0.775rem] text-gray-600">
-                                    <strong class="font-medium text-black">@authorName</strong>
-                                    <span class="mx-[0.35rem] text-gray-400">·</span>
-                                    @ViewHelpers.RelativeTime(blog.CreatedAt)
-                                </span>
-                                @if (blog.Status == "DRAFT")
-                                {
-                                    <span class="inline-flex flex-shrink-0 items-center gap-[0.3rem] rounded-full bg-draft-bg px-[0.55rem] py-[0.2rem] font-medium text-[0.7rem] text-draft-text">Draft</span>
-                                }
-                                else if (blog.Status == "PRIVATE")
-                                {
-                                    <span class="inline-flex flex-shrink-0 items-center gap-[0.3rem] rounded-full bg-private-bg px-[0.55rem] py-[0.2rem] font-medium text-[0.7rem] text-private-text">Private</span>
-                                }
-                                else if (blog.Status == "PUBLISHED")
-                                {
-                                    <span class="inline-flex flex-shrink-0 items-center gap-[0.3rem] rounded-full bg-published-bg px-[0.55rem] py-[0.2rem] font-medium text-[0.7rem] text-published-text">Published</span>
-                                }
-                                @if (blog.Comments.Count > 0)
-                                {
-                                    <span class="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-gray-100 px-2 py-1 font-medium text-[0.7rem] text-gray-600" title="@blog.Comments.Count comment@(blog.Comments.Count != 1 ? "s" : "")">
-                                        <svg class="h-3 w-3 fill-none stroke-current" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                                        </svg>
-                                        @blog.Comments.Count
-                                    </span>
-                                }
-                                <span class="inline-flex flex-shrink-0 items-center rounded-full px-[0.6rem] py-1 font-medium text-[0.7rem] @PriorityBadgeColors(blog.Priority)">P@(blog.Priority)</span>
-                            </div>
-
-                            <a asp-action="Detail" asp-route-id="@blog.Id" asp-route-from="mine"
-                               class="font-display mb-[0.6rem] block leading-tight tracking-tight text-[1.25rem] text-black no-underline hover:text-black hover:no-underline"
-                               title="@blog.Title">
-                                @blog.Title
-                            </a>
-
-                            <p class="leading-[1.65] mb-0 flex-1 overflow-hidden text-sm text-gray-600 [display:-webkit-box] [-webkit-line-clamp:3] [-webkit-box-orient:vertical]">@ViewHelpers.Excerpt(blog.Content)</p>
-
-                            <div class="blog-actions absolute bottom-3 right-3 flex items-center gap-1">
-                                @if (blog.Status == "DRAFT")
-                                {
-                                    <a asp-action="Edit" asp-route-id="@blog.Id"
-                                       class="blog-action h-[30px] inline-flex items-center rounded bg-white px-[0.4rem] text-[0.75rem] text-black no-underline transition hover:bg-gray-100"
-                                       aria-label="Continue writing" title="Continue writing">
-                                        <svg class="h-[14px] w-[14px] flex-shrink-0 fill-none stroke-current" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                            <path d="M12 20h9" />
-                                            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                                        </svg>
-                                        <span class="label">Continue</span>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <a asp-action="Detail" asp-route-id="@blog.Id" asp-route-from="mine"
-                                       class="blog-action h-[30px] inline-flex items-center rounded bg-white px-[0.4rem] text-[0.75rem] text-black no-underline transition hover:bg-gray-100"
-                                       aria-label="View" title="View">
-                                        <svg class="h-[14px] w-[14px] flex-shrink-0 fill-none stroke-current" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                            <circle cx="12" cy="12" r="3" />
-                                        </svg>
-                                        <span class="label">View</span>
-                                    </a>
-                                    <a asp-action="Edit" asp-route-id="@blog.Id"
-                                       class="blog-action h-[30px] inline-flex items-center rounded bg-white px-[0.4rem] text-[0.75rem] text-gray-600 no-underline transition hover:bg-gray-100 hover:text-black"
-                                       aria-label="Edit" title="Edit">
-                                        <svg class="h-[14px] w-[14px] flex-shrink-0 fill-none stroke-current" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                            <path d="M12 20h9" />
-                                            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                                        </svg>
-                                        <span class="label">Edit</span>
-                                    </a>
-                                }
-                                <button type="button"
-                                        class="blog-action js-delete h-[30px] font-[inherit] inline-flex cursor-pointer items-center rounded border-0 bg-white px-[0.4rem] text-[0.75rem] text-gray-600 transition hover:bg-danger-bg hover:text-error"
-                                        data-id="@blog.Id"
-                                        data-title="@blog.Title"
-                                        aria-label="Delete" title="Delete">
-                                    <svg class="h-[14px] w-[14px] flex-shrink-0 fill-none stroke-current" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6" />
-                                        <path d="M10 11v6M14 11v6" />
-                                        <path d="M9 6V4a2 2 0 012-2h2a2 2 0 012 2v2" />
-                                    </svg>
-                                    <span class="label">Delete</span>
-                                </button>
-                            </div>
-                        </article>
-                    }
-                </div>
-            }
-        </div>
+                DisplayLinkToFirstPage = PagedListDisplayMode.IfNeeded,
+                DisplayLinkToLastPage = PagedListDisplayMode.IfNeeded,
+                DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+                DisplayLinkToNextPage = PagedListDisplayMode.Always,
+                DisplayLinkToIndividualPages = true,
+                MaximumPageNumbersToDisplay = 7,
+                EllipsesFormat = "&hellip;",
+                LinkToPreviousPageFormat = "‹",
+                LinkToNextPageFormat = "›",
+                LinkToFirstPageFormat = "«",
+                LinkToLastPageFormat = "»"
+            })
+        </nav>
     }
 
     <!-- Delete confirmation modal (shared) -->
@@ -268,26 +264,7 @@ else
 
     <script>
         (function () {
-            // ── Tabs ──────────────────────────────────────────────
-            const tabs = document.querySelectorAll('.tab-btn');
-            const panels = document.querySelectorAll('.tab-panel');
-
-            tabs.forEach(function (tab) {
-                tab.addEventListener('click', function () {
-                    const key = tab.getAttribute('data-tab');
-                    tabs.forEach(t => t.classList.toggle('active', t === tab));
-                    panels.forEach(p => p.classList.toggle('active', p.getAttribute('data-panel') === key));
-                    history.replaceState(null, '', location.pathname + location.search + '#' + key.toLowerCase());
-                });
-            });
-
-            const hash = (location.hash || '').replace('#', '').toUpperCase();
-            if (hash) {
-                const target = document.querySelector('.tab-btn[data-tab="' + hash + '"]');
-                if (target) target.click();
-            }
-
-            // ── Filter form: preserve current tab hash on submit ──
+            // ── Filter form: applying a filter resets page = 1 ───────
             const filterForm = document.getElementById('filter-form');
             if (filterForm) {
                 filterForm.addEventListener('submit', function (e) {
@@ -297,7 +274,7 @@ else
                         if (value) params.append(key, value);
                     });
                     const query = params.toString();
-                    window.location.href = location.pathname + (query ? '?' + query : '') + location.hash;
+                    window.location.href = location.pathname + (query ? '?' + query : '');
                 });
             }
 

@@ -9,3 +9,35 @@
     @apply font-sans bg-gray-50 text-black antialiased m-0 p-0;
   }
 }
+
+@layer components {
+  /* Shared pager styling for every X.PagedList instance in the app.
+     Apply via `<nav class="app-pager flex justify-center">` around
+     `@Html.PagedListPager(...)`. */
+  .app-pager ul {
+    @apply inline-flex flex-wrap items-center gap-1 p-0 m-0 list-none;
+  }
+  .app-pager li {
+    @apply list-none;
+  }
+  .app-pager a,
+  .app-pager span {
+    @apply inline-flex items-center justify-center h-9 min-w-[36px] px-3
+           rounded border border-gray-200 bg-white
+           text-[0.825rem] text-gray-700 no-underline transition;
+  }
+  .app-pager a:hover {
+    @apply border-gray-400 bg-gray-50 text-black;
+  }
+  .app-pager .active a,
+  .app-pager .active span {
+    @apply border-black bg-black text-white font-medium;
+  }
+  .app-pager .disabled a,
+  .app-pager .disabled span {
+    @apply border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed;
+  }
+  .app-pager .PagedList-ellipses span {
+    @apply border-transparent bg-transparent text-gray-400;
+  }
+}
