@@ -59,10 +59,6 @@ namespace Personal_Blog_Application.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
         {
-            // Failures stay inside the password modal (TempData["PasswordError"]
-            // is read by Profile/Index.cshtml to re-open the modal + show the
-            // banner). The global TempData["Error"] is reserved for page-level
-            // errors so it isn't used here.
             if (!ModelState.IsValid)
             {
                 var firstError = ModelState.Values
