@@ -136,5 +136,21 @@ namespace Personal_Blog_Application.Services.Profile
 
             return OperationResult.Ok();
         }
+
+        public async Task<OperationResult> ChangePasswordAsync(
+            string userId, string currentPassword, string newPassword)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return OperationResult.NotFound();
+
+            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+            if (result.Succeeded) return OperationResult.Ok();
+
+            var messages = result.Errors.Select(e =>
+                e.Code == "PasswordMismatch"
+                    ? "Current password is incorrect."
+                    : e.Description);
+            return OperationResult.Fail(messages.ToArray());
+        }
     }
 }

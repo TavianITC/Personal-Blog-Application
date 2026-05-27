@@ -75,7 +75,7 @@ namespace Personal_Blog_Application.Services.Blogs
             return counts;
         }
 
-        public async Task<IReadOnlyList<Blog>> GetHomeFeedAsync(string userId, int take = 20)
+        public async Task<IReadOnlyList<Blog>> GetHomeFeedAsync(string userId, int take = 10)
         {
             return await _context.Blogs
                 .Include(b => b.User)

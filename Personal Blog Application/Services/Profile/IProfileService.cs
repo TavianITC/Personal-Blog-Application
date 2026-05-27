@@ -7,9 +7,9 @@ namespace Personal_Blog_Application.Services.Profile
     {
         Task<OperationResult<ProfileViewModel>> GetProfileAsync(string userId);
 
-        // Validates + re-encodes the uploaded image and writes it to wwwroot/avatars.
-        // Returns Ok on success; ValidationError for size/format issues; NotFound
-        // if the caller's user record can't be loaded.
         Task<OperationResult> UpdateAvatarAsync(string userId, IFormFile? file);
+
+        Task<OperationResult> ChangePasswordAsync(
+            string userId, string currentPassword, string newPassword);
     }
 }

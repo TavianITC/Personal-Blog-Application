@@ -20,7 +20,7 @@ namespace Personal_Blog_Application.Services.Blogs
         // Counts per Status for the Mine tabs (PUBLISHED/PRIVATE/DRAFT).
         Task<IDictionary<string, int>> GetMyStatusCountsAsync(string userId);
 
-        Task<IReadOnlyList<Blog>> GetHomeFeedAsync(string userId, int take = 20);
+        Task<IReadOnlyList<Blog>> GetHomeFeedAsync(string userId, int take = 10);
 
         Task<OperationResult<BlogDetailViewModel>> GetDetailAsync(
             int id, string userId, bool isAdmin, string? from,

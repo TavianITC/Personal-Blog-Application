@@ -24,7 +24,7 @@ namespace Personal_Blog_Application.Controllers
         public IActionResult Login()
         {
             if (User.Identity!.IsAuthenticated)
-                return RedirectToAction("Index", "Blogs");
+                return RedirectToAction("Index", "Home");
             return View();
         }
 
@@ -38,7 +38,7 @@ namespace Personal_Blog_Application.Controllers
 
             var result = await _auth.LoginAsync(loginModel);
             if (result.Success)
-                return RedirectToAction("Index", "Blogs");
+                return RedirectToAction("Index", "Home");
 
             foreach (var err in result.Errors)
                 ModelState.AddModelError(string.Empty, err);

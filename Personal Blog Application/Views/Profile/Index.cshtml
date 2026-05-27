@@ -1,6 +1,7 @@
 @model Personal_Blog_Application.ViewModels.ProfileViewModel
 @{
     ViewData["Title"] = "Profile";
+    var passwordError = TempData["PasswordError"] as string;
 }
 
 <div class="mx-auto max-w-[640px]">
@@ -77,22 +78,67 @@
                     <p class="text-sm font-medium text-black">Username</p>
                     <p class="text-[0.775rem] text-gray-400">@Model.UserName</p>
                 </div>
-                <button type="button" disabled
-                        class="h-[34px] inline-flex cursor-not-allowed items-center justify-center rounded border border-gray-200 bg-transparent px-4 font-medium text-[0.8rem] text-gray-400">
-                    Coming soon
-                </button>
             </div>
             <div class="flex items-center justify-between py-3">
                 <div>
                     <p class="text-sm font-medium text-black">Password</p>
                     <p class="text-[0.775rem] text-gray-400">••••••••</p>
                 </div>
-                <button type="button" disabled
-                        class="h-[34px] inline-flex cursor-not-allowed items-center justify-center rounded border border-gray-200 bg-transparent px-4 font-medium text-[0.8rem] text-gray-400">
-                    Coming soon
+                <button type="button" id="passwordChangeBtn"
+                        class="h-[34px] inline-flex cursor-pointer items-center justify-center rounded border border-gray-300 bg-white px-4 font-medium text-[0.8rem] text-black transition hover:-translate-y-px hover:border-gray-400 hover:bg-gray-50 active:translate-y-0">
+                    Change
                 </button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- ── Change password modal ───────────────────────────────────────── -->
+<div id="passwordModal" class="z-[1000] fixed inset-0 hidden items-center justify-center bg-black/45 p-4">
+    <div class="w-full max-w-[440px] rounded-md bg-white p-8 shadow-[0_25px_60px_rgba(0,0,0,0.2)]">
+        <h2 class="font-display mb-2 tracking-tight text-[1.25rem]">Change password</h2>
+        <p class="mb-6 text-sm leading-relaxed text-gray-600">
+            Enter your current password, then choose a new one (at least 6 characters).
+        </p>
+
+        <form method="post" action="/profile/change-password" id="passwordForm" novalidate>
+            @Html.AntiForgeryToken()
+
+            <div id="passwordFormBanner"
+                 class="mb-4 hidden rounded-md border border-danger-border bg-danger-bg px-3 py-2 text-[0.8rem] text-error"></div>
+
+            <label class="mb-4 block">
+                <span class="mb-2 block text-sm font-medium text-black">Current password</span>
+                <input type="password" name="CurrentPassword" id="currentPassword" autocomplete="current-password"
+                       class="h-[38px] w-full rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.9rem] text-black outline-none transition focus:border-black focus:bg-white" />
+                <span id="currentPasswordError" class="mt-1 block min-h-[1em] text-[0.775rem] text-error"></span>
+            </label>
+
+            <label class="mb-4 block">
+                <span class="mb-2 block text-sm font-medium text-black">New password</span>
+                <input type="password" name="NewPassword" id="newPassword" autocomplete="new-password" minlength="6"
+                       class="h-[38px] w-full rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.9rem] text-black outline-none transition focus:border-black focus:bg-white" />
+                <span id="newPasswordError" class="mt-1 block min-h-[1em] text-[0.775rem] text-error"></span>
+            </label>
+
+            <label class="mb-6 block">
+                <span class="mb-2 block text-sm font-medium text-black">Confirm new password</span>
+                <input type="password" name="ConfirmPassword" id="confirmPassword" autocomplete="new-password"
+                       class="h-[38px] w-full rounded border border-gray-200 bg-gray-50 px-[0.9rem] font-sans text-[0.9rem] text-black outline-none transition focus:border-black focus:bg-white" />
+                <span id="confirmPasswordError" class="mt-1 block min-h-[1em] text-[0.775rem] text-error"></span>
+            </label>
+
+            <div class="flex justify-end gap-2">
+                <button type="button" id="passwordCancel"
+                        class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-gray-200 bg-transparent px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-gray-600 transition hover:-translate-y-px hover:border-gray-300 hover:bg-gray-100 hover:text-black active:translate-y-0">
+                    Cancel
+                </button>
+                <button type="submit" id="passwordSubmit"
+                        class="h-[34px] inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-transparent bg-black px-[0.9rem] font-sans font-medium leading-none text-[0.8rem] text-white transition hover:-translate-y-px hover:shadow-btn-primary-hover hover:opacity-90 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50">
+                    Update password
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -142,7 +188,114 @@
 </div>
 
 @section Scripts {
+    @if (!string.IsNullOrEmpty(passwordError))
+    {
+        <script>
+            window.__passwordError = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(passwordError));
+        </script>
+    }
     <script>
+        // ── Change password modal ─────────────────────────────────────
+        (function () {
+            const openBtn = document.getElementById('passwordChangeBtn');
+            const modal = document.getElementById('passwordModal');
+            const cancelBtn = document.getElementById('passwordCancel');
+            const form = document.getElementById('passwordForm');
+            const submitBtn = document.getElementById('passwordSubmit');
+            const banner = document.getElementById('passwordFormBanner');
+
+            const cur = document.getElementById('currentPassword');
+            const nw = document.getElementById('newPassword');
+            const cf = document.getElementById('confirmPassword');
+            const curErr = document.getElementById('currentPasswordError');
+            const nwErr = document.getElementById('newPasswordError');
+            const cfErr = document.getElementById('confirmPasswordError');
+
+            const MIN_LEN = 6;
+
+            function resetErrors() {
+                banner.classList.add('hidden');
+                banner.textContent = '';
+                curErr.textContent = '';
+                nwErr.textContent = '';
+                cfErr.textContent = '';
+            }
+
+            function openModal() {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                resetErrors();
+                submitBtn.disabled = false;
+                setTimeout(() => cur.focus(), 50);
+            }
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                form.reset();
+                resetErrors();
+                submitBtn.disabled = false;
+            }
+
+            openBtn.addEventListener('click', openModal);
+            cancelBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+            });
+
+            function checkMatchLive() {
+                if (cf.value && nw.value !== cf.value) {
+                    cfErr.textContent = 'Passwords do not match.';
+                } else {
+                    cfErr.textContent = '';
+                }
+            }
+            nw.addEventListener('input', checkMatchLive);
+            cf.addEventListener('input', checkMatchLive);
+
+            // Block submit if client-side checks fail — the user's explicit
+            // requirement: validate at the UI before sending.
+            form.addEventListener('submit', function (e) {
+                resetErrors();
+                let ok = true;
+
+                if (!cur.value) { curErr.textContent = 'Current password is required.'; ok = false; }
+                if (!nw.value) {
+                    nwErr.textContent = 'New password is required.'; ok = false;
+                } else if (nw.value.length < MIN_LEN) {
+                    nwErr.textContent = 'New password must be at least ' + MIN_LEN + ' characters.';
+                    ok = false;
+                }
+                if (!cf.value) {
+                    cfErr.textContent = 'Please confirm your new password.'; ok = false;
+                } else if (nw.value !== cf.value) {
+                    cfErr.textContent = 'Passwords do not match.';
+                    ok = false;
+                }
+                if (cur.value && nw.value && cur.value === nw.value) {
+                    nwErr.textContent = 'New password must be different from current password.';
+                    ok = false;
+                }
+
+                if (!ok) {
+                    e.preventDefault();
+                    return;
+                }
+                submitBtn.disabled = true;
+            });
+
+            // Server-side error from the previous POST: re-open the modal and
+            // show the message inside *its* banner instead of the page-level
+            // flash. The password fields stay empty (don't echo passwords back).
+            if (window.__passwordError) {
+                openModal();
+                banner.textContent = window.__passwordError;
+                banner.classList.remove('hidden');
+                delete window.__passwordError;
+            }
+        })();
+
+        // ── Avatar upload modal ───────────────────────────────────────
         (function () {
             const openBtn = document.getElementById('avatarChangeBtn');
             const modal = document.getElementById('avatarModal');
