@@ -51,7 +51,12 @@ builder.Services.AddScoped<IBlogService, BlogService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    // Populates ViewBag.AvatarUrl on every authenticated request so the navbar
+    // partial in _Layout.cshtml can render the signed-in user's avatar.
+    options.Filters.Add<PopulateUserNavigationFilter>();
+});
 
 var app = builder.Build();
 
