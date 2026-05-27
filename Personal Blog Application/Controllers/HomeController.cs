@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Personal_Blog_Application.Data;
 using Personal_Blog_Application.Models;
+using Personal_Blog_Application.Services.Blogs;
 using Personal_Blog_Application.ViewModels;
 using System.Diagnostics;
 
@@ -13,16 +12,16 @@ namespace Personal_Blog_Application.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly AppDbContext _context;
+        private readonly IBlogService _blogs;
         private readonly UserManager<User> _userManager;
 
         public HomeController(
             ILogger<HomeController> logger,
-            AppDbContext context,
+            IBlogService blogs,
             UserManager<User> userManager)
         {
             _logger = logger;
-            _context = context;
+            _blogs = blogs;
             _userManager = userManager;
         }
 
@@ -32,29 +31,17 @@ namespace Personal_Blog_Application.Controllers
 
             if (User.Identity?.IsAuthenticated == true)
             {
-                var userId = _userManager.GetUserId(User);
-                vm.Feed = await _context.Blogs
-                    .Include(b => b.User)
-                    .Include(b => b.Comments)
-                    .AsSplitQuery()
-                    .Where(b => b.Status == "PUBLISHED" && b.CreatedBy != userId)
-                    .OrderByDescending(b => b.CreatedAt)
-                    .Take(20)
-                    .ToListAsync();
+                var userId = _userManager.GetUserId(User)!;
+                vm.Feed = (await _blogs.GetHomeFeedAsync(userId)).ToList();
             }
 
             return View(vm);
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+        public IActionResult Privacy() => View();
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        public IActionResult Error() =>
+            View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

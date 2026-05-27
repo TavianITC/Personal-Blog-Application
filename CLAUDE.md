@@ -13,20 +13,19 @@ The solution file `Personal Blog Application.slnx` lives at the repo root; the a
 Run from inside the project directory (`Personal Blog Application/`):
 
 ```powershell
+npm install                             # first-time setup — required, see Tailwind note below
 dotnet restore
 dotnet build
 dotnet run                              # serves http://localhost:5000, https://localhost:7000
 dotnet ef migrations add <Name>
 dotnet ef database update               # apply EF migrations to BlogDb
 dotnet ef migrations remove
-
-# Tailwind pipeline (npm) — required, _Layout.cshtml links wwwroot/css/output.css
-npm install
-npm run css:build                       # one-shot minified build
-npm run css:watch                       # rebuild on .cshtml change during dev
+npm run css:watch                       # rebuild Tailwind on save during development
 ```
 
 There is no test project.
+
+**Tailwind build is wired into MSBuild.** `Personal Blog Application.csproj` defines a `<Target Name="Tailwind" BeforeTargets="Build">` that shells out to `npm run css:build` (input `wwwroot/css/site.css` → output `wwwroot/css/output.css`). If `node_modules/` is missing the build will fail, so `npm install` must be run at least once. Editing `tailwind.config.js`, `postcss.config.js`, or `wwwroot/css/site.css` triggers a CSS rebuild via the `UpToDateCheckBuilt` items in the csproj.
 
 ## Database setup
 
@@ -41,7 +40,7 @@ On every app startup `SeedData.InitializeAsync` runs (called from `Program.cs`) 
 
 **Auth & authorization.** Cookie auth is configured in `Program.cs` with custom paths: `/auth/login`, `/auth/logout`, `/auth/access-denied`. Two named policies exist — `AdminOnly` (ADMIN) and `UserOnly` (USER or ADMIN) — but most controllers currently use `[Authorize]` or `[Authorize(Roles = "ADMIN")]` directly. `AuthController` is `[AllowAnonymous]`. Newly-registered users are auto-assigned the `USER` role in `AuthController.Register`. `AuthController.Login` rejects users with `IsActive == false` before calling `PasswordSignInAsync`.
 
-**Data layer.** `AppDbContext : IdentityDbContext<User>` lives in `Personal_Blog_Application.Data` alongside `SeedData`.
+**Data layer.** `AppDbContext : IdentityDbContext<User>` lives in `Personal_Blog_Application.Data` — a single `using Personal_Blog_Application.Data;` covers both `AppDbContext` and `SeedData`.
 
 Domain model:
 - `User : IdentityUser` adds `AvatarUrl`, `IsActive` (admins can deactivate accounts), and navigation collections for `Blogs` and `Comments`.
@@ -63,7 +62,9 @@ Apply this same "owner-or-admin" pattern (`CanModify` / `CanDelete` private help
 
 Because the navbar shows the avatar on every page, a global async action filter — `Filters/PopulateUserNavigationFilter` registered in `Program.cs` — loads the signed-in user once per request and writes `ViewBag.AvatarUrl`. `_Layout.cshtml` reads `ViewBag.AvatarUrl` (falling back to initials). If you ever optimize this, the obvious upgrade is to bake `AvatarUrl` into a cookie claim via `IUserClaimsPrincipalFactory<User>` and refresh on avatar change.
 
-**Blog content is HTML.** `BlogCreateViewModel.Content` is the raw HTML produced by Quill (initialized in `Views/Blogs/Create.cshtml`). Quill writes its HTML into the hidden `Content` field on form `formdata` event. Any new editor view must replicate this binding or the field will submit empty. The `ViewHelpers.Excerpt(html, max)` helper strips tags + decodes entities for list/card excerpts — use it instead of rendering raw HTML in summaries.
+**Per-role data visibility.** `BlogService.GetFeedAsync` filters by role — `ADMIN` sees every post, everyone else sees only `b.Status == "PUBLISHED"`. `GetMineAsync` is always scoped to the caller's posts. Apply the same `(userId, isAdmin)` parameter pattern for any new list endpoint.
+
+**Service layer.** Business logic + data access live in `Services/<Feature>/` (one folder per feature, each with `IFooService.cs` + `FooService.cs`). Controllers are thin: bind input, call service, map result to `IActionResult`. Services never touch `HttpContext`, `ModelState`, or `IActionResult` — they receive `userId` / `isAdmin` (or `currentUserId`) as parameters and return `OperationResult` / `OperationResult<T>` from `Services/Common`. The result carries a `ResultStatus` (`Success`, `ValidationError`, `NotFound`, `Forbidden`, `Conflict`) plus optional `Errors` list or `FieldErrors` dictionary; the controller maps these to `NotFound()` / `Forbid()` / `ModelState.AddModelError`. Things that must stay in the controller: TempData/ViewBag, AJAX detection (`X-Requested-With` header), `RenderPartialAsync` (uses `ICompositeViewEngine` + `ControllerContext`), and `SignInManager.RefreshSignInAsync` after username changes. Register every new service in `Program.cs` with `AddScoped`.
 
 **ViewModels vs Models.** Controllers bind to `ViewModels/*` (e.g. `BlogCreateViewModel`, `LoginViewModel`, `UserEditViewModel`, `AvatarUploadViewModel`) and never expose entity types directly to views for write operations. Read views can take entities (e.g. `_BlogCard.cshtml` is `@model Blog`).
 
@@ -72,9 +73,10 @@ Because the navbar shows the avatar on every page, a global async action filter 
 - `Views/Shared/_CommentItem.cshtml` + `_CommentSection.cshtml` — comment list + form; the section partial owns the AJAX JS for the page.
 - `Helpers/ViewHelpers.cs` — static `Excerpt`, `Initials`, `RelativeTime` used across views. Registered globally via `Views/_ViewImports.cshtml`.
 
-**UI / Tailwind.** `_Layout.cshtml` is the site shell. Tailwind is configured in `tailwind.config.js`:
-- Custom palette (`black`, `gray-*`, status colors `draft`/`private`/`published`/`success`/`danger`, `error`) — extend the config rather than hardcoding hex values in classes.
-- Custom font families (`font-display` = DM Serif Display, `font-sans` = DM Sans), `max-w-content` (1120px), `h-nav` / `spacing.nav` (60px), `shadow-dropdown`.
-- Tailwind scans `Views/**/*.cshtml`, `Pages/**/*.cshtml`, `Areas/**/*.cshtml` — new utility classes only appear in `output.css` after `npm run css:build` (or `css:watch`).
+**Layout & UI.** `Views/Shared/_Layout.cshtml` carries the entire site shell including a large inline `<style>` block with CSS variables (`--black`, `--gray-*`, `--font-display`, etc.) — page-level styles in views reference those variables. Bootstrap/jQuery/jquery-validation are vendored via `libman.json` into `wwwroot/lib/`; run `libman restore` if those folders are empty. Note: `_Layout.cshtml` references `jquery-validation-unobtrusive` which is **not** in `libman.json` — add it to libman or download it if validation scripts 404. Tailwind utilities (compiled to `wwwroot/css/output.css`) coexist with the hand-rolled CSS variable system — both are loaded.
 
-**Vendored JS libs.** Bootstrap is gone, but jQuery + jquery-validation are still vendored via `libman.json` into `wwwroot/lib/` (run `libman restore` if those folders are empty). `_Layout.cshtml` also references `~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js` which is **not** declared in `libman.json` — add it to libman or drop the file in by hand if validation scripts 404.
+**View helpers.** `Helpers/ViewHelpers.cs` provides `Excerpt(html, max)` (strips tags + truncates HTML), `Initials(name)`, and `RelativeTime(utc)`. Use these in Razor views rather than re-implementing — they assume Quill-style HTML content and the project's UTC-stored timestamps.
+
+**Controller status.** `AuthController`, `BlogsController`, `CommentsController`, `UsersController`, and `HomeController` are fully implemented and refactored onto the service layer (constructor takes `I<Feature>Service`, not `AppDbContext`). `ProfileController` is still a `[Authorize]` stub (no actions) — the navbar links `Profile/Index` and `Profile/Avatar` so adding those actions is the natural next step. When you build it, follow the service-layer pattern: create `Services/Profile/IProfileService.cs` + `ProfileService.cs` first. Avatar uploads land in `wwwroot/avatars/` (gitignored / runtime-created).
+
+**Uploads.** `wwwroot/avatars/` is the upload target for user avatar images. It is created at runtime and not checked in — code that writes there must `Directory.CreateDirectory` defensively.
