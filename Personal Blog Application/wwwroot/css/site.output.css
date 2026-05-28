@@ -1180,12 +1180,12 @@ html,
   min-width: 22px;
 }
 
-.min-w-\[280px\] {
-  min-width: 280px;
-}
-
 .min-w-\[240px\] {
   min-width: 240px;
+}
+
+.min-w-\[280px\] {
+  min-width: 280px;
 }
 
 .max-w-2xl {
@@ -1228,20 +1228,16 @@ html,
   flex: 1 1 0%;
 }
 
-.flex-\[1_1_200px\] {
-  flex: 1 1 200px;
-}
-
-.flex-\[1_1_280px\] {
-  flex: 1 1 280px;
-}
-
 .flex-\[1_1_160px\] {
   flex: 1 1 160px;
 }
 
 .flex-\[1_1_240px\] {
   flex: 1 1 240px;
+}
+
+.flex-\[1_1_280px\] {
+  flex: 1 1 280px;
 }
 
 .flex-shrink-0 {

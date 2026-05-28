@@ -4,4 +4,5 @@
     <File Path="README.md" />
   </Folder>
   <Project Path="Personal Blog Application/Personal Blog Application.csproj" />
+  <Project Path="Personal Blog Application.Tests/Personal Blog Application.Tests.csproj" />
 </Solution>
